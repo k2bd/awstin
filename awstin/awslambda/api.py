@@ -4,7 +4,7 @@ from abc import ABC, abstractclassmethod
 logger = logging.getLogger(__name__)
 
 
-class GenericLambdaEvent(ABC):
+class LambdaEvent(ABC):
     """
     Abstract data model for handling Lambda events.
 

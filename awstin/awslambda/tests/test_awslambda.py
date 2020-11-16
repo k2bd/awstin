@@ -1,12 +1,12 @@
 import logging
 import unittest
 
-from awstin.awslambda.api import GenericLambdaEvent
+from awstin.awslambda.api import LambdaEvent
 from awstin.awslambda.api import __name__ as EVENT_NAME
 from awstin.awslambda.api import lambda_handler
 
 
-class CustomEvent(GenericLambdaEvent):
+class CustomEvent(LambdaEvent):
     def __init__(self, request_id, memory_limit):
         self.request_id = request_id
         self.memory_limit = memory_limit
@@ -18,7 +18,7 @@ class CustomEvent(GenericLambdaEvent):
         return cls(request_id, memory_limit)
 
 
-class TestGenericLambdaEvent(unittest.TestCase):
+class TestLambdaEvent(unittest.TestCase):
     def test_custom_event_from_event(self):
         event = {
             "requestContext": {"requestId": "id1"},
