@@ -1,7 +1,7 @@
 import unittest.mock as mock
 import unittest
 
-from awstin.dynamodb import DynamoDB
+from awstin.dynamodb import __NAME__ as DYNAMODB_NAME, DynamoDB
 from awstin.testing.dynamodb import (
     __name__ as TESTING_NAME,
     temporary_dynamodb_table,
@@ -30,11 +30,16 @@ class TestTemporaryDynamoDBTable(unittest.TestCase):
         )
 
     def test_create_dynamodb_table_fails(self):
+        fake_client = mock.Mock()
+
         # Mock the dynamodb client's list_tables method to return an empty
         # table names list, which should cause the loop to time out
+        def fake_list_tables(): return {"TableNames": []}
+        fake_client.list_tables = fake_list_tables
+
         mock_dynamodb = mock.patch(
-            TESTING_NAME + ".DynamoDB.tables",
-            return_value=[],
+            DYNAMODB_NAME + ".boto3.client",
+            return_value=fake_client,
         )
 
         temp_table_ctx = temporary_dynamodb_table(
@@ -44,10 +49,11 @@ class TestTemporaryDynamoDBTable(unittest.TestCase):
             max_attempts=1,
         )
 
-        with self.assertRaises(RuntimeError) as err:
-            with mock_dynamodb, temp_table_ctx:
-                # Cannot create a table so we'll have an exception
-                pass
+        with mock_dynamodb:
+            with self.assertRaises(RuntimeError) as err:
+                with temp_table_ctx:
+                    # Cannot create a table so we'll have an exception
+                    pass
 
         self.assertEqual(
             "Could not create table 'test_table_name'",
