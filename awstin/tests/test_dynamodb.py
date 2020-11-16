@@ -5,10 +5,10 @@ from awstin.constants import AWS_REGION, TEST_DYNAMODB_ENDPOINT
 from awstin.dynamodb import (
     __name__ as DYNAMODB_NAME,
     _dynamodb_config,
-    dynamodb_table,
-    dynamodb_client,
+    DynamoDB,
 )
-from awstin.testing import set_env, temporary_dynamodb_table
+from awstin.testing.generic import set_env
+from awstin.testing.dynamodb import temporary_dynamodb_table
 
 
 class TestDynamodbConfig(unittest.TestCase):
@@ -53,25 +53,10 @@ class TestDynamodbConfig(unittest.TestCase):
         )
 
 
-class TestGetDynamoDBClient(unittest.TestCase):
-    def test_dynamodb_client(self):
-        client = dynamodb_client()
-
-        # Can use the DynamoDB client
-        client.list_tables()
-
-    def test_config_kwargs(self):
-        with mock.patch(DYNAMODB_NAME+"._dynamodb_config") as mock_config:
-            with mock.patch(DYNAMODB_NAME+".boto3.client"):
-                dynamodb_client(timeout=2.1, max_retries=888)
-
-        mock_config.assert_called_once_with(timeout=2.1, max_retries=888)
-
-
-class TestDynamodbTable(unittest.TestCase):
+class TestDynamodb(unittest.TestCase):
     def test_dynamodb_table(self):
         with temporary_dynamodb_table("test_table_name", "test_hashkey_name"):
-            table = dynamodb_table("test_table_name")
+            table = DynamoDB()["test_table_name"]
 
             test_item = {
                 "test_hashkey_name": "test_value",
@@ -86,9 +71,9 @@ class TestDynamodbTable(unittest.TestCase):
             result_item = table.get_item(Key=test_key)
             self.assertEqual(result_item["Item"], test_item)
 
-    def test_config_kwargs(self):
-        with mock.patch(DYNAMODB_NAME+"._dynamodb_config") as mock_config:
-            with mock.patch(DYNAMODB_NAME+".boto3.resource"):
-                dynamodb_table("test_table_name", timeout=1.2, max_retries=777)
+    def test_dynamodb_tables(self):
+        with temporary_dynamodb_table("test_tab1", "test_key1"):
+            with temporary_dynamodb_table("test_tab2", "test_key2"):
+                tables = DynamoDB().tables
 
-        mock_config.assert_called_once_with(timeout=1.2, max_retries=777)
+        self.assertEqual(tables, ["test_tab1", "test_tab2"])

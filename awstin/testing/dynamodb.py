@@ -1,7 +1,6 @@
 import contextlib
-import os
 
-from awstin.dynamodb import dynamodb_client
+from awstin.dynamodb import DynamoDB
 
 
 @contextlib.contextmanager
@@ -28,9 +27,9 @@ def temporary_dynamodb_table(
         Max number of attempts to check if the table exists, after which the
         client gives up.
     """
-    dynamodb = dynamodb_client()
+    dynamodb = DynamoDB()
 
-    dynamodb.create_table(
+    dynamodb.client.create_table(
         AttributeDefinitions=[
             {
                 'AttributeName': hashkey_name,
@@ -50,8 +49,8 @@ def temporary_dynamodb_table(
         },
     )
 
-    exists_waiter = dynamodb.get_waiter("table_exists")
-    not_exists_waiter = dynamodb.get_waiter("table_not_exists")
+    exists_waiter = dynamodb.client.get_waiter("table_exists")
+    not_exists_waiter = dynamodb.client.get_waiter("table_not_exists")
 
     result = exists_waiter.wait(
         TableName=table_name,
@@ -66,7 +65,7 @@ def temporary_dynamodb_table(
     try:
         yield
     finally:
-        dynamodb.delete_table(TableName=table_name)
+        dynamodb.client.delete_table(TableName=table_name)
 
         result = not_exists_waiter.wait(
             TableName=table_name,
@@ -78,30 +77,3 @@ def temporary_dynamodb_table(
         if result is not None:
             msg = "Could not delete table {!r}"
             raise RuntimeError(msg.format(table_name))
-
-
-@contextlib.contextmanager
-def set_env(**env_vars):
-    """
-    Context manager to temporarily set environment variables. Restores previous
-    values on leaving
-
-    Parameters
-    ----------
-    **env_vars : Dict(str, str or None)
-        Environment variables to set temporarily. If None, the environment
-        variable will be tempoarily removed.
-    """
-    old_environ = dict(os.environ)
-    for key, value in env_vars.items():
-        if value is None:
-            if key in os.environ:
-                del os.environ[key]
-        else:
-            os.environ[key] = value
-
-    try:
-        yield
-    finally:
-        os.environ.clear()
-        os.environ.update(old_environ)

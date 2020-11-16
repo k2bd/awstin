@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from awstin.event import (
+from awstin.awslambda import (
     __name__ as EVENT_NAME,
     lambda_handler,
     GenericLambdaEvent,
