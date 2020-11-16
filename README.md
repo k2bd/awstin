@@ -64,6 +64,10 @@ For integration testing, a context manager to create and then tear-down a Dynamo
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
-with temporary_dynamodb_table("table-name", "hashkey-name"):
-    # Do tests
+with temporary_dynamodb_table("table_name", "hashkey_name") as table:
+    item = {
+        "hashkey_name": "test_value",
+        "another_key": 5,
+    }
+    table.put_item(Item=item)
 ```

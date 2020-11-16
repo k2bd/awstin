@@ -63,7 +63,7 @@ def temporary_dynamodb_table(
         raise RuntimeError("Could not create table {!r}".format(table_name))
 
     try:
-        yield
+        yield dynamodb[table_name]
     finally:
         dynamodb.client.delete_table(TableName=table_name)
 

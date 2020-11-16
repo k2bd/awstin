@@ -55,15 +55,13 @@ class TestDynamodbConfig(unittest.TestCase):
 
 class TestDynamodb(unittest.TestCase):
     def test_dynamodb_table(self):
-        with temporary_dynamodb_table("test_table_name", "test_hashkey_name"):
-            table = DynamoDB()["test_table_name"]
-
+        with temporary_dynamodb_table("table_name", "hashkey_name") as table:
             test_item = {
-                "test_hashkey_name": "test_value",
+                "hashkey_name": "test_value",
                 "another_key": 5,
             }
             test_key = {
-                "test_hashkey_name": "test_value",
+                "hashkey_name": "test_value",
             }
 
             # Table can be used
