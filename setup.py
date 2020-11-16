@@ -7,7 +7,7 @@ description = "Core project classes and utils"
 
 setuptools.setup(
     name="awstin",
-    version="0.0.1",
+    version="0.0.2",
     author="Kevin Duff",
     description=description,
     long_description=long_description,
