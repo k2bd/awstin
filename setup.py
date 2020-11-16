@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-description = "Core project classes and utils"
+description = "Utilities for building and testing AWS applications in Python"
 
 setuptools.setup(
     name="awstin",
@@ -19,4 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+        "boto3",
+    ],
 )
