@@ -54,7 +54,7 @@ def _dynamodb_config(timeout=5.0, max_retries=3):
 
 class DynamoDB:
     """
-    TODO
+    A client for typical use of DynamoDB.
     """
     def __init__(self, timeout=5.0, max_retries=3):
         """
@@ -87,6 +87,11 @@ class DynamoDB:
 
     def __getitem__(self, key):
         """
-        TODO
+        Indexed access to DynamoDB tables.
+
+        Returns
+        -------
+        Table
+            the dynamodb table, if it exists.
         """
         return self.resource.Table(key)
