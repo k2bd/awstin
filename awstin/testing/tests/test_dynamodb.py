@@ -3,7 +3,6 @@ import unittest
 
 from awstin.dynamodb import __NAME__ as DYNAMODB_NAME, DynamoDB
 from awstin.testing.dynamodb import (
-    __name__ as TESTING_NAME,
     temporary_dynamodb_table,
 )
 

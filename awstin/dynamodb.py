@@ -74,7 +74,10 @@ class DynamoDB:
         self.timeout = timeout
         self.max_retries = max_retries
 
-        self.config = _dynamodb_config(timeout=timeout, max_retries=max_retries)
+        self.config = _dynamodb_config(
+            timeout=timeout,
+            max_retries=max_retries,
+        )
         self.client = boto3.client('dynamodb', **self.config)
         self.resource = boto3.resource('dynamodb', **self.config)
 
