@@ -10,6 +10,12 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      TEST_DYNAMODB_ENDPOINT: http://localhost:8123
+      AWS_DEFAULT_REGION: fake-region
+      AWS_ACCESS_KEY_ID: fake-key
+      AWS_SECRET_ACCESS_KEY: fake-secret-key
+
     steps:
     - uses: actions/checkout@v2
     - uses: rrainn/dynamodb-action@v2.0.0
@@ -33,11 +39,6 @@ jobs:
     - name: Test with unittest
       run: |
         python -m unittest -v
-      env:
-        TEST_DYNAMODB_ENDPOINT: http://localhost:8123
-        AWS_DEFAULT_REGION: fake-region
-        AWS_ACCESS_KEY_ID: fake-key
-        AWS_SECRET_ACCESS_KEY: fake-secret-key
     - name: Generate coverage report
       run: |
         pip install pytest
