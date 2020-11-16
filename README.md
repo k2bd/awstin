@@ -1,4 +1,6 @@
-# Awstin
+# awstin
+
+![PyPI](https://img.shields.io/pypi/v/awstin)
 
 ![CI Build](https://github.com/k2bd/awstin/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/k2bd/awstin/branch/master/graph/badge.svg)](https://codecov.io/gh/k2bd/awstin)
 
@@ -33,7 +35,7 @@ from awstin.awslambda.api import lambda_handler
 @lambda_handler(CustomEvent)
 def handle_custom_event(event):
     print(event.request_id)
-    print(reqeust.memory_limit)
+    print(event.memory_limit)
 ```
 
 
