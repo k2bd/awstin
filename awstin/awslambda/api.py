@@ -1,5 +1,5 @@
-from abc import ABC, abstractclassmethod
 import logging
+from abc import ABC, abstractclassmethod
 
 logger = logging.getLogger(__name__)
 

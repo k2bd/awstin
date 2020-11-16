@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from awstin.testing.generic import set_env
+from awstin.environment import set_env
 
 UNLIKELY_ENV_VAR = "THIS_ENV_VAR_IS_UNLIKELY_TO_BE_IN_USE_150y71i1"
 

@@ -2,13 +2,13 @@ import unittest
 import unittest.mock as mock
 
 from awstin.constants import AWS_REGION, TEST_DYNAMODB_ENDPOINT
-from awstin.dynamodb import (
+from awstin.dynamodb.api import (
     __name__ as DYNAMODB_NAME,
     _dynamodb_config,
     DynamoDB,
 )
-from awstin.testing.generic import set_env
-from awstin.testing.dynamodb import temporary_dynamodb_table
+from awstin.dynamodb.testing import temporary_dynamodb_table
+from awstin.environment import set_env
 
 
 class TestDynamodbConfig(unittest.TestCase):

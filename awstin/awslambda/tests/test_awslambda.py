@@ -1,11 +1,9 @@
 import logging
 import unittest
 
-from awstin.awslambda import (
-    __name__ as EVENT_NAME,
-    lambda_handler,
-    GenericLambdaEvent,
-)
+from awstin.awslambda.api import GenericLambdaEvent
+from awstin.awslambda.api import __name__ as EVENT_NAME
+from awstin.awslambda.api import lambda_handler
 
 
 class CustomEvent(GenericLambdaEvent):

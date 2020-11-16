@@ -1,6 +1,6 @@
 import contextlib
 
-from awstin.dynamodb import DynamoDB
+from awstin.dynamodb.api import DynamoDB
 
 
 @contextlib.contextmanager
