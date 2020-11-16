@@ -6,7 +6,7 @@ jobs:
   build:
     strategy:
       matrix:
-        python-version: [3.6, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     runs-on: ubuntu-latest
 
@@ -25,7 +25,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8
         pip install -r requirements.txt
-        pip install .
+        pip install -e .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -38,3 +38,21 @@ jobs:
         AWS_DEFAULT_REGION: fake-region
         AWS_ACCESS_KEY_ID: fake-key
         AWS_SECRET_ACCESS_KEY: fake-secret-key
+    - name: Generate coverage report
+      run: |
+        pip install pytest
+        pip install pytest-cov
+        pytest --cov=./awstin --cov-report=xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        files: ./coverage1.xml,./coverage2.xml
+        directory: ./coverage/reports/
+        flags: unittests
+        env_vars: OS,PYTHON
+        name: codecov-umbrella
+        fail_ci_if_error: true
+        path_to_write_report: ./coverage/codecov_report.gz
+        verbose: true
