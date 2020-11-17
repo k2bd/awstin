@@ -43,7 +43,8 @@ def handle_custom_event(event):
 
 ### Production
 
-The `DynamoDB` class currently gives dict-like access to boto3 `Table`s. This requires either the `TEST_DYNAMODB_ENDPOINT` (for integration testing) or `AWS_REGION` (for production) endpoints to be set.
+The `DynamoDB` class currently gives dict-like access to boto3 `Table`s and their contents.
+This requires either the `TEST_DYNAMODB_ENDPOINT` (for integration testing) or `AWS_REGION` (for production) endpoints to be set.
 
 ```python
 from awstin.dynamodb.api import DynamoDB
@@ -56,6 +57,13 @@ tables = dynamodb.tables
 
 # Access a single table
 table = dynamodb["my_table"]
+
+# Tables that only have a partition key can be accessed directly by their
+# partition key
+item = table["an_item"]
+
+# Full primary key access is also available
+item = table[{"primary_key_name": "an_item"}]
 ```
 
 ### Testing
@@ -71,5 +79,5 @@ with temporary_dynamodb_table("table_name", "hashkey_name") as table:
         "hashkey_name": "test_value",
         "another_key": 5,
     }
-    table.put_item(Item=item)
+    table.put_item(item)
 ```
