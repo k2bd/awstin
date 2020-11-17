@@ -1,4 +1,5 @@
 import contextlib
+import warnings
 
 from awstin.dynamodb.api import DynamoDB
 
@@ -27,6 +28,9 @@ def temporary_dynamodb_table(
         Max number of attempts to check if the table exists, after which the
         client gives up.
     """
+    # TODO: make filter more specific
+    warnings.simplefilter("ignore", ResourceWarning)
+
     dynamodb = DynamoDB()
 
     dynamodb.client.create_table(
