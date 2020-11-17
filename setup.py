@@ -7,7 +7,7 @@ description = "Utilities for building and testing AWS applications in Python"
 
 setuptools.setup(
     name="awstin",
-    version="0.0.1",
+    version="0.0.2",
     author="Kevin Duff",
     description=description,
     long_description=long_description,
@@ -17,6 +17,9 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
+        "Development Status :: 1 - Planning",
+        "License :: OSI Approved :: MIT License",
+        "Intended Audience :: Developers",
     ],
     python_requires='>=3.6',
     install_requires=[
