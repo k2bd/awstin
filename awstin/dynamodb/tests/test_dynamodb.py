@@ -1,7 +1,6 @@
 from contextlib import ExitStack
 import unittest
 import unittest.mock as mock
-import warnings
 
 from awstin.constants import AWS_REGION, TEST_DYNAMODB_ENDPOINT
 from awstin.dynamodb.api import (
