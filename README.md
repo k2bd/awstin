@@ -81,3 +81,16 @@ with temporary_dynamodb_table("table_name", "hashkey_name") as table:
     }
     table.put_item(item)
 ```
+
+
+## SNS
+
+SNS topics can be retrieved by name and published to with the message directly:
+
+```
+from awstin.sns.api import SNSTopic
+
+
+topic = SNSTopic("topic-name")
+message_id = topic.publish("a message")
+```
