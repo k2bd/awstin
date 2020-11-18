@@ -50,3 +50,6 @@ TZ = "TZ"
 
 #: DynamodDB service endpoint, for example if running a DynamoDB container
 TEST_DYNAMODB_ENDPOINT = "TEST_DYNAMODB_ENDPOINT"
+
+#: SNS service endpoint for testing
+TEST_SNS_ENDPOINT = "TEST_SNS_ENDPOINT"

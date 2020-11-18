@@ -1,7 +1,12 @@
 version: '3.7'
 services:
- dynamodb-local:
-   image: amazon/dynamodb-local:latest
-   container_name: dynamodb-local
-   ports:
-    - "8000:8000"
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+  sns-local:
+    image: s12v/sns
+    container_name: sns-local
+    ports:
+      - "9911:9911"
