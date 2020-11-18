@@ -6,7 +6,7 @@ from awstin.constants import AWS_REGION
 from awstin.environment import set_env
 
 
-class TestDynamodbConfig(unittest.TestCase):
+class TestConfig(unittest.TestCase):
     def test_aws_config_production(self):
         # Check that in a production environment, the resource is called
         # with the right kwargs
