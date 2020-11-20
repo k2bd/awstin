@@ -71,10 +71,6 @@ class TestDynamoDB(unittest.TestCase):
             with self.assertRaises(KeyError):
                 table["123"]
 
-    def test_dynamodb_nonexistent_table(self):
-        with self.assertRaises(KeyError):
-            DynamoDB()["fake_table"]
-
     def test_dynamodb_list_tables(self):
         with temporary_dynamodb_table("test_tab1", "test_key1"):
             with temporary_dynamodb_table("test_tab2", "test_key2"):

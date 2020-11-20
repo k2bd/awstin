@@ -62,10 +62,7 @@ class DynamoDB:
         Table
             the dynamodb table, if it exists.
         """
-        if key in self.list_tables():
-            return Table(self, key)
-        else:
-            raise KeyError(f"Table {key} does not exist")
+        return Table(self, key)
 
 
 class Table:
