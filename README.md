@@ -84,7 +84,7 @@ def token_auth(auth_event):
 ### Production
 
 The `DynamoDB` class currently gives dict-like access to boto3 `Table`s and their contents.
-This requires either the `TEST_DYNAMODB_ENDPOINT` (for integration testing) or `AWS_REGION` (for production) endpoints to be set.
+This requires either the `TEST_DYNAMODB_ENDPOINT` (for integration testing) or `AWS_REGION` (for production) environment variable to be set.
 
 ```python
 from awstin.dynamodb import DynamoDB
@@ -131,7 +131,8 @@ with temporary_dynamodb_table("table_name", "hashkey_name") as table:
 
 ## SNS
 
-SNS topics can be retrieved by name and published to with the message directly:
+SNS topics can be retrieved by name and published to with the message directly.
+This requires either the `TEST_SNS_ENDPOINT` (for integration testing) or `AWS_REGION` (for production) environment variable to be set.
 
 ```python
 from awstin.sns import SNSTopic
