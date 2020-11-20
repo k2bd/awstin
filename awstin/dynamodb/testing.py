@@ -1,7 +1,7 @@
 import contextlib
 import warnings
 
-from awstin.dynamodb.api import DynamoDB
+from awstin.dynamodb import DynamoDB
 
 
 @contextlib.contextmanager

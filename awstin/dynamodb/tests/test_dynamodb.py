@@ -1,7 +1,8 @@
 from contextlib import ExitStack
 import unittest
 
-from awstin.dynamodb.api import DynamoDB
+from awstin.dynamodb import DynamoDB
+from awstin.dynamodb.api import _PAGE_SIZE
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
@@ -49,14 +50,17 @@ class TestDynamodb(unittest.TestCase):
         self.assertEqual(tables, ["test_tab1", "test_tab2"])
 
     def test_dynamodb_list_tables_long(self):
+        # Reduce page size so test doesn't have to make over 100 tables
+        _PAGE_SIZE = 5
+
         dynamodb = DynamoDB()
 
         table_managers = [
             temporary_dynamodb_table("abc"+str(i), "def"+str(i))
-            for i in range(123)
+            for i in range(20)
         ]
         with ExitStack() as stack:
             for table in table_managers:
                 stack.enter_context(table)
 
-            self.assertEqual(len(dynamodb.tables), 123)
+            self.assertEqual(len(dynamodb.tables), 20)

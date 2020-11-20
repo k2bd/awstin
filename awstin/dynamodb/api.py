@@ -5,6 +5,8 @@ import boto3
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
 
+_PAGE_SIZE = 100
+
 
 class DynamoDB:
     """
@@ -44,6 +46,7 @@ class DynamoDB:
 
         while "LastEvaluatedTableName" in response:
             response = self.client.list_tables(
+                Limit=_PAGE_SIZE,
                 ExclusiveStartTableName=response["LastEvaluatedTableName"]
             )
             tables.extend(response["TableNames"])
