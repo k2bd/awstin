@@ -1,7 +1,8 @@
 import unittest
 from unittest import mock
 
-from awstin.config import __name__ as CONFIG_NAME, aws_config
+from awstin.config import __name__ as CONFIG_NAME
+from awstin.config import aws_config
 from awstin.constants import AWS_REGION
 from awstin.environment import set_env
 

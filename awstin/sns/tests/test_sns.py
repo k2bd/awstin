@@ -6,7 +6,7 @@ import boto3
 
 from awstin.config import aws_config
 from awstin.constants import TEST_SNS_ENDPOINT
-from awstin.sns.api import SNSTopic
+from awstin.sns import SNSTopic
 
 
 class TestSNSTopic(unittest.TestCase):
