@@ -5,6 +5,7 @@ import boto3
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
 
+# Testing parameter to change table listing page size
 _PAGE_SIZE = 100
 
 
@@ -39,9 +40,8 @@ class DynamoDB:
         self.client = boto3.client('dynamodb', **self.config)
         self.resource = boto3.resource('dynamodb', **self.config)
 
-    @property
-    def tables(self):
-        response = self.client.list_tables()
+    def list_tables(self):
+        response = self.client.list_tables(Limit=_PAGE_SIZE)
         tables = response["TableNames"]
 
         while "LastEvaluatedTableName" in response:
@@ -62,15 +62,29 @@ class DynamoDB:
         Table
             the dynamodb table, if it exists.
         """
-        if key in self.tables:
-            return Table(self, key)
-        else:
-            raise KeyError(f"Table {key} does not exist")
+        return Table(self, key)
 
 
 class Table:
     """
-    Interface to a DynamoDB table
+    Interface to a DynamoDB table.
+
+    Items can be retrieved in a dict-like way:
+    ```
+    Table("table_name")[{"HashKeyName": "hashval", "SortKeyName": 123}]
+    ```
+
+    Items can also be retrieved from the table by a shorthand depending on the
+    primary key. If it's only a partition key, items can be retrieved by the
+    value of the partition key:
+    ```
+    Table("table_name")["hashval"]
+    ```
+    If it's a partition and sort key, items can be retrived by a hashkey,
+    sortkey tuple:
+    ```
+    Table("table_name")[("hashval", 123)]
+    ```
     """
     def __init__(self, dynamodb_client, table_name):
         """
@@ -98,7 +112,15 @@ class Table:
                 for entry in table_description["Table"]["KeySchema"]
                 if entry["KeyType"] == "HASH"
             ]
-            primary_key = {partition_key: key}
+            if isinstance(key, tuple):
+                sort_key, = [
+                    entry["AttributeName"]
+                    for entry in table_description["Table"]["KeySchema"]
+                    if entry["KeyType"] == "RANGE"
+                ]
+                primary_key = {partition_key: key[0], sort_key: key[1]}
+            else:
+                primary_key = {partition_key: key}
         return primary_key
 
     def __getitem__(self, key):
