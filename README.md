@@ -4,7 +4,7 @@
 
 ![CI Build](https://github.com/k2bd/awstin/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/k2bd/awstin/branch/master/graph/badge.svg)](https://codecov.io/gh/k2bd/awstin)
 
-Utilities for building and testing AWS applications in Python.
+High-level utilities for building and testing AWS applications in Python.
 
 ## Lambdas
 
@@ -93,22 +93,28 @@ from awstin.dynamodb import DynamoDB
 dynamodb = DynamoDB()
 
 # List of available tables
-tables = dynamodb.tables
+tables = dynamodb.list_tables()
 
-# Access a single table
-table = dynamodb["my_table"]
+# Access a table by name
+table1 = dynamodb["my_table"]
 
 # Tables that only have a partition key can be accessed directly by their
 # partition key
-item = table["an_item"]
+item1 = table1["an_item"]
+
+# Tables that have partition and sort keys can be accessed by a tuple
+table2 = dynamodb["another_table"]
+item2 = table2[("hashval", 123)]
 
 # Full primary key access is also available
-item = table[{"primary_key_name": "an_item"}]
+item3 = table2[{"hashkey_name": "hashval", "sortkey_name": 123}]
 ```
 
 ### Testing
 
-For integration testing, a context manager to create and then tear-down a DynamoDB table is provided. More flexible control over the created table is planned.
+For integration testing, a context manager to create and then automatically tear-down a DynamoDB table is provided.
+The context manager waits for the table to be created/deleted before entering/exiting to avoid testing issues.
+Hashkey and sortkey info can be provided.
 
 ```python
 from awstin.dynamodb.testing import temporary_dynamodb_table
