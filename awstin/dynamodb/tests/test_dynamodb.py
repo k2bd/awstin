@@ -1,8 +1,8 @@
-from contextlib import ExitStack
 import unittest
+from contextlib import ExitStack
 
+import awstin.dynamodb.api as ddb_api
 from awstin.dynamodb import DynamoDB
-from awstin.dynamodb.api import _PAGE_SIZE
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
@@ -51,7 +51,7 @@ class TestDynamodb(unittest.TestCase):
 
     def test_dynamodb_list_tables_long(self):
         # Reduce page size so test doesn't have to make over 100 tables
-        _PAGE_SIZE = 5
+        ddb_api._PAGE_SIZE = 5
 
         dynamodb = DynamoDB()
 

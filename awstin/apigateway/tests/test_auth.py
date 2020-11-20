@@ -1,8 +1,7 @@
 import unittest
-from unittest import mock
 
+from awstin.apigateway.auth import AuthResponse, auth_handler
 from awstin.awslambda import LambdaEvent
-from awstin.apigateway.auth import auth_handler, AuthResponse
 
 
 class MyAuthEvent(LambdaEvent):

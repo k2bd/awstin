@@ -1,10 +1,9 @@
-import unittest.mock as mock
 import unittest
+import unittest.mock as mock
 
-from awstin.dynamodb import __name__ as DYNAMODB_NAME, DynamoDB
-from awstin.dynamodb.testing import (
-    temporary_dynamodb_table,
-)
+from awstin.dynamodb import DynamoDB
+from awstin.dynamodb import __name__ as DYNAMODB_NAME
+from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
 class TestTemporaryDynamoDBTable(unittest.TestCase):

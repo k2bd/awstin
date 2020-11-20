@@ -1,5 +1,5 @@
-from enum import auto, Enum
 import logging
+from enum import Enum, auto
 
 logger = logging.getLogger(__name__)
 
