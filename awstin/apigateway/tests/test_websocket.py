@@ -12,9 +12,13 @@ class TestWebsocket(unittest.TestCase):
             return_value=mock_api_client,
         )
         with mock_aws_client as m_aws:
-            Websocket("callbackurl").send("message")
+            socket = Websocket("endpointurl", stage="dev")
+            socket.send("callbackurl", "message")
 
-        m_aws.assert_called_once_with("apigatewaymanagementapi")
+        m_aws.assert_called_once_with(
+            "apigatewaymanagementapi",
+            endpoint_url="https://endpointurl/dev"
+        )
         mock_api_client.post_to_connection.assert_called_once_with(
             Data="message",
             ConnectionId="callbackurl",

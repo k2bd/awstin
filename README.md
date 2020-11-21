@@ -88,7 +88,7 @@ Websocket pushes can be performed with a callback URL and message:
 from awstin.apigateway.websocket import Websocket
 
 
-Websocket("callback_url").send("message")
+Websocket("endpoint_url", "dev").send("callback_url", "message")
 ```
 
 ## DynamoDB
