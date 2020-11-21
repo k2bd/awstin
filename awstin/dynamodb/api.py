@@ -41,6 +41,14 @@ class DynamoDB:
         self.resource = boto3.resource('dynamodb', **self.config)
 
     def list_tables(self):
+        """
+        Return a list of all table names in this DynamoDB instance.
+
+        Returns
+        -------
+        list of str
+            Table names
+        """
         response = self.client.list_tables(Limit=_PAGE_SIZE)
         tables = response["TableNames"]
 
@@ -147,5 +155,29 @@ class Table:
         """
         primary_key = self._get_primary_key(key)
         self._boto3_table.delete_item(Key=primary_key)
+
+    def scan(self):
+        """
+        Generate all items in the table, one at a time.
+
+        Lazily queries for more items if needed.
+
+        Yields
+        ------
+        dict
+            an item in the table
+        """
+        # TODO: scan filters
+
+        results = self._boto3_table.scan()
+        items = results["Items"]
+        yield from items
+
+        while "LastEvaluatedKey" in results:
+            results = self._boto3_table.scan(
+                ExclusiveStartKey=results["LastEvaluatedKey"],
+            )
+            items = results["Items"]
+            yield from items
 
     # TODO: Batch Update
