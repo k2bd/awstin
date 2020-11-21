@@ -93,3 +93,18 @@ class TestDynamoDB(unittest.TestCase):
                 stack.enter_context(table)
 
             self.assertEqual(len(dynamodb.list_tables()), 11)
+
+    def test_dynamodb_table_items_generator(self):
+        # Page size of DynamoDB item returns is 1MB. Add ~2.2MB of items
+        add_items = [
+            {"pkey": "item "+str(i), "bigstring": "a" * 100000}
+            for i in range(22)
+        ]
+        with temporary_dynamodb_table("test_tab", "pkey") as table:
+            for item in add_items:
+                table.put_item(item)
+
+            result_items = list(table.scan())
+
+        self.assertEqual(len(result_items), 22)
+        self.assertCountEqual(result_items, add_items)
