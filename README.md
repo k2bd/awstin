@@ -40,9 +40,9 @@ def handle_custom_event(event):
 
 ## API Gateway
 
-### Production
+### Authorization Lambdas
 
-#### Authorization Lambdas
+#### Production
 
 A special version of `lambda_handler` is available for authorization lambdas. The `LambdaEvent` data model must have `resource_arn` and `principal_id` attributes, or a 500 invalid error will be returned. These return one of `AuthResponse.ACCEPT`, `AuthResponse.REJECT`, `AuthResponse.UNAUTHORIZED`, or `AuthResponse.INVALID`. `awstin` then formats the result properly.
 
@@ -78,6 +78,18 @@ def token_auth(auth_event):
         return AuthResponse.INVALID
 ```
 
+### Websockets
+
+#### Production
+
+Websocket pushes can be performed with a callback URL and message:
+
+```python
+from awstin.apigateway.websocket import Websocket
+
+
+Websocket("callback_url").send("message")
+```
 
 ## DynamoDB
 
