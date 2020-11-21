@@ -110,6 +110,11 @@ item2 = table2[("hashval", 123)]
 item3 = table2[{"hashkey_name": "hashval", "sortkey_name": 123}]
 ```
 
+Tables can be scanned without worrying about pagination. `Table.scan`
+yields items, requesting another page of items lazily only when it's out of
+items in a page.
+
+
 ### Testing
 
 For integration testing, a context manager to create and then automatically tear-down a DynamoDB table is provided.
@@ -130,6 +135,8 @@ with temporary_dynamodb_table("table_name", "hashkey_name") as table:
 
 
 ## SNS
+
+### Production
 
 SNS topics can be retrieved by name and published to with the message directly:
 
