@@ -6,90 +6,6 @@
 
 High-level utilities for building and testing AWS applications in Python.
 
-## Lambdas
-
-### Production
-
-Lambda events can be given data models that are created from the event and context:
-```python
-from awstin.awslambda import LambdaEvent
-
-
-class CustomEvent(LambdaEvent):
-    def __init__(self, request_id, memory_limit):
-        self.request_id = request_id
-        self.memory_limit = memory_limit
-
-    @classmethod
-    def _from_event(cls, event, context):
-        request_id = event["requestContext"]["requestId"]
-        memory_limit = context["memory_limit_in_mb"]
-        return cls(request_id, memory_limit)
-```
-
-Lambda handlers can then be created using the `lambda_handler` decorator factory, which takes as an input the data model for the lambda event.
-```python
-from awstin.awslambda import lambda_handler
-
-
-@lambda_handler(CustomEvent)
-def handle_custom_event(event):
-    print(event.request_id)
-    print(event.memory_limit)
-```
-
-## API Gateway
-
-### Authorization Lambdas
-
-#### Production
-
-A special version of `lambda_handler` is available for authorization lambdas. The `LambdaEvent` data model must have `resource_arn` and `principal_id` attributes, or a 500 invalid error will be returned. These return one of `AuthResponse.ACCEPT`, `AuthResponse.REJECT`, `AuthResponse.UNAUTHORIZED`, or `AuthResponse.INVALID`. `awstin` then formats the result properly.
-
-```python
-from awstin.apigateway.auth import auth_handler
-from awstin.awslambda import LambdaEvent
-
-
-class TokenAuthEvent(LambdaEvent):
-    def __init__(self, token, resource_arn, principal_id):
-        self.token = token
-        self.resource_arn = resource_arn
-        self.principal_id = principal_id
-
-    @classmethod
-    def _from_event(cls, event, _context):
-        token = event["headers"]["AuthToken"]
-        resource_arn = event["methodArn"]
-        principal_id = event["requestContext"]["connectionId"]
-
-        return cls(token, resource_arn, principal_id)
-
-
-@auth_handler(TokenAuthEvent)
-def token_auth(auth_event):
-    if auth_event.token == "good token":
-        return AuthResponse.ACCEPT
-    elif auth_event.token == "bad token":
-        return AuthResponse.REJECT
-    elif auth_event.token == "unauthorized token":
-        return AuthResponse.UNAUTHORIZED
-    else:
-        return AuthResponse.INVALID
-```
-
-### Websockets
-
-#### Production
-
-Websocket pushes can be performed with a callback URL and message:
-
-```python
-from awstin.apigateway.websocket import Websocket
-
-
-Websocket("endpoint_url", "dev").send("callback_url", "message")
-```
 
 ## DynamoDB
 
@@ -122,9 +38,7 @@ item2 = table2[("hashval", 123)]
 item3 = table2[{"hashkey_name": "hashval", "sortkey_name": 123}]
 ```
 
-Tables can be scanned without worrying about pagination. `Table.scan`
-yields items, requesting another page of items lazily only when it's out of
-items in a page.
+Tables can be scanned without worrying about pagination. `Table.scan` yields items, requesting another page of items lazily only when it's out of items in a page.
 
 
 ### Testing
@@ -143,6 +57,74 @@ with temporary_dynamodb_table("table_name", "hashkey_name") as table:
         "another_key": 5,
     }
     table.put_item(item)
+```
+
+
+## Lambdas
+
+### Production
+
+Lambda handlers can be made more readable by separating event parsing from business logic.
+The `lambda_handler` decorator factory takes a parser for the triggering event and context, and returns individual values to be used in the wrapped function.
+```python
+from awstin.awslambda import lambda_handler
+
+def event_parser(event, context):
+    request_id = event["requestContext"]["requestId"]
+    memory_limit = context["memory_limit_in_mb"]
+    return request_id, memory_limit
+
+
+@lambda_handler(event_parser)
+def handle_custom_event(request_id, memory_limit):
+    print(request_id)
+    print(memory_limit)
+```
+
+
+## API Gateway
+
+### Authorization Lambdas
+
+#### Production
+
+Authorizor lambda responses can be generated with helper functions provided by `awstin.apigateway.auth`. `accept`, `reject`, `unauthorized`, and `invalid` will produce properly formatted auth lambda responses.
+
+```python
+from awstin.apigateway import auth
+
+
+def auth_event_parser(event, _context):
+    token = event["headers"]["AuthToken"]
+    resource_arn = event["methodArn"]
+    principal_id = event["requestContext"]["connectionId"]
+
+    return token, resource_arn, principal_id
+
+
+@lambda_handler(auth_event_parser)
+def token_auth(token, resource_arn, principal_id):
+    if token == "good token":
+        return auth.accept(principal_id, resource_arn)
+    elif token == "bad token":
+        return auth.reject(principal_id, resource_arn)
+    elif token == "unauthorized token":
+        return auth.unauthorized()
+    else:
+        return auth.invalid()
+```
+
+### Websockets
+
+#### Production
+
+Websocket pushes can be performed with a callback URL and message:
+
+```python
+from awstin.apigateway.websocket import Websocket
+
+
+Websocket("endpoint_url", "dev").send("callback_url", "message")
 ```
 
 
