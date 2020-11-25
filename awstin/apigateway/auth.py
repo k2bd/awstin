@@ -1,68 +1,82 @@
-import logging
-from enum import Enum, auto
 
-logger = logging.getLogger(__name__)
-
-
-class AuthResponse(Enum):
-    ACCEPT = auto()
-    REJECT = auto()
-    UNAUTHORIZED = auto()
-    INVALID = auto()
-
-
-def auth_handler(event_type):
+def accept(principal_id, resource_arn):
     """
-    Decorates a lambda handler that takes an object of ``event_type`` and
-    returns one of the ``AuthResponse`` values. ``event_type`` must have
-    ``principle_id`` and ``resource_arn`` attributes to create the auth
-    response.
-
-    A corresponding authorization response is created:
-
-    AuthResonse.ACCEPT:
-        Allow access
-    AuthResponse.REJECT:
-        Reject access
-    AuthResponse.UNAUTHORIZED:
-        Return a 401 unauthorized
-    AuthResponse.INVALID, or any other value:
-        Return a 500 invalid
+    Return an auth lambda response granting access to the given resource ARN
+    to the given principle ID.
 
     Parameters
     ----------
-    event_type : LambdaEvent
-        The type of event the handler is handling. The handler should accept
-        this type of object.
+    principal_id : str
+        The principal ID to grant access to
+    resource_arn : str
+        The ARN of the resource to grant access to
+
+    Returns
+    -------
+    dict
+        Auth lambda response
     """
+    return _auth_response(principal_id, resource_arn, "Allow")
 
-    def handler(func):
-        def wrapped(event, context):
-            logger.info(f"Event: {event!r}")
 
-            parsed = event_type.from_event(event, context)
+def reject(principal_id, resource_arn):
+    """
+    Return an auth lambda response rejecting access to the given resource ARN
+    to the given principle ID.
 
-            try:
-                principal_id = parsed.principal_id
-                resource_arn = parsed.resource_arn
-            except AttributeError:
-                return _invalid_response()
+    Parameters
+    ----------
+    principal_id : str
+        The principal ID to reject access to
+    resource_arn : str
+        The ARN of the resource to reject access to
 
-            result = func(parsed)
+    Returns
+    -------
+    dict
+        Auth lambda response
+    """
+    return _auth_response(principal_id, resource_arn, "Deny")
 
-            logger.info(f"Result: {result!r}")
 
-            if result == AuthResponse.ACCEPT:
-                return _accept_response(principal_id, resource_arn)
-            elif result == AuthResponse.REJECT:
-                return _reject_response(principal_id, resource_arn)
-            elif result == AuthResponse.UNAUTHORIZED:
-                return _unauthorized_response()
-            else:
-                return _invalid_response()
+def unauthorized(body='Unauthorized'):
+    """
+    Return an auth lambda response indicating the requester is unauthorized.
 
-        return wrapped
-    return handler
+    Parameters
+    ----------
+    body : str, optional
+        Optional resposnse body. Default "Unauthorized"
+
+    Returns
+    -------
+    dict
+        Auth lambda response
+    """
+    return {
+        'statusCode': 401,
+        'body': body,
+    }
+
+
+def invalid(body='Invalid'):
+    """
+    Return an auth lambda response indicating the request is invalid.
+
+    Parameters
+    ----------
+    body : str, optional
+        Optional resposnse body. Default "Invalid"
+
+    Returns
+    -------
+    dict
+        Auth lambda response
+    """
+    return {
+        'statusCode': 500,
+        'body': body,
+    }
 
 
 def _auth_response(principal_id, resource_arn, effect):
@@ -80,26 +94,4 @@ def _auth_response(principal_id, resource_arn, effect):
                 }
             ]
         },
-    }
-
-
-def _accept_response(principal_id, resource_arn):
-    return _auth_response(principal_id, resource_arn, "Allow")
-
-
-def _reject_response(principal_id, resource_arn):
-    return _auth_response(principal_id, resource_arn, "Deny")
-
-
-def _unauthorized_response():
-    return {
-        'statusCode': 401,
-        'body': 'Unauthorized',
-    }
-
-
-def _invalid_response():
-    return {
-        'statusCode': 500,
-        'body': 'Invalid',
     }
