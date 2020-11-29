@@ -146,7 +146,10 @@ class Table:
         return self._boto3_table.put_item(Item=item)
 
     def update_item(self, *args, **kwargs):
-        raise NotImplementedError  # TODO
+        """
+        For now, direct exposure of update_item
+        """
+        return self._boto3_table.update_item(*args, **kwargs)
 
     def delete_item(self, key):
         """

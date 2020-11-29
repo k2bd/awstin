@@ -142,3 +142,15 @@ from awstin.sns import SNSTopic
 topic = SNSTopic("topic-name")
 message_id = topic.publish("a message")
 ```
+
+Message attributes can be set from the kwargs of the publish:
+
+```python
+topic.publish(
+    "another message",
+    attrib_a="a string",
+    attrib_b=1234,
+    attrib_c=["a", "b", False, None],
+    attrib_d=b"bytes value",
+)
+```

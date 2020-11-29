@@ -40,5 +40,45 @@ class TestSNSTopic(unittest.TestCase):
         with mock.patch.object(topic, "topic", mock_sns):
             message_id = topic.publish("a cool message")
 
-        mock_sns.publish.assert_called_once_with(Message="a cool message")
+        mock_sns.publish.assert_called_once_with(
+            Message="a cool message",
+            MessageAttributes={},
+        )
         self.assertEqual(message_id, "msg_id")
+
+    def test_post_to_sns_topic_attributes(self):
+        topic = SNSTopic("atopic")
+
+        # Create a phony subsscription for boto3 reasons
+        topic.topic.subscribe(Protocol="http", Endpoint="http://0")
+
+        with mock.patch.object(topic, "topic", wraps=topic.topic) as w_topic:
+            topic.publish(
+                "a_cool_message",
+                attrib_a="a string",
+                attrib_b=1234,
+                attrib_c=["a", "b", False, None],
+                attrib_d=b"bytes value",
+            )
+
+        w_topic.publish.assert_called_once_with(
+            Message="a_cool_message",
+            MessageAttributes={
+                "attrib_a": {
+                    "DataType": "String",
+                    "StringValue": "a string",
+                },
+                "attrib_b": {
+                    "DataType": "Number",
+                    "StringValue": "1234",
+                },
+                "attrib_c": {
+                    "DataType": "String.Array",
+                    "StringValue": '["a", "b", false, null]',
+                },
+                "attrib_d": {
+                    "DataType": "Binary",
+                    "BinaryValue": b"bytes value",
+                },
+            },
+        )
