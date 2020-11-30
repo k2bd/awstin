@@ -1,26 +1,13 @@
-import os
 import unittest
 from unittest import mock
 
-import boto3
-
-from awstin.config import aws_config
-from awstin.constants import TEST_SNS_ENDPOINT
 from awstin.sns import SNSTopic
+from awstin.sns.testing import SNSCleanupMixin
 
 
-class TestSNSTopic(unittest.TestCase):
+class TestSNSTopic(unittest.TestCase, SNSCleanupMixin):
     def setUp(self):
-        config = aws_config(endpoint=os.environ.get(TEST_SNS_ENDPOINT))
-        self.sns_client = boto3.client("sns", **config)
-
-        self.addCleanup(self.cleanup_topics)
-
-    def cleanup_topics(self):
-        topics = self.sns_client.list_topics()["Topics"]
-        arns = [topic["TopicArn"] for topic in topics]
-        for arn in arns:
-            self.sns_client.delete_topic(TopicArn=arn)
+        SNSCleanupMixin.setUp(self)
 
     def test_instantiate_creates_topic(self):
         SNSTopic("name_of_topic")
