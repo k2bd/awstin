@@ -18,7 +18,7 @@ class DynamoDB:
         Parameters
         ----------
         timeout : float, optional
-            Timeout for establishing a conneciton to DynamoDB (default 5.0)
+            Timeout for establishing a connection to DynamoDB (default 5.0)
         max_retries : int, optional
             Max retries for establishing a connection to DynamoDB (default 3)
 
