@@ -175,7 +175,7 @@ class Table:
 
         Yields
         ------
-        dict
+        DynamoModel
             an item in the table
         """
         filter_kwargs = {}

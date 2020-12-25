@@ -9,10 +9,10 @@ class NotSet:
     A value of an attribute on a data model is not present in a DynamoDB result
     """
     def __str__(self):
-        return "<<Attribute not present in DynamoDB>>"
+        return "<<Attribute not set>>"
 
     def __repr__(self):
-        return "<<Attribute not present in DynamoDB>>"
+        return "<<Attribute not set>>"
 
 
 NOT_SET = NotSet()
@@ -144,7 +144,7 @@ class DynamoModel(metaclass=ModelMeta):
 
         result = cls()
 
-        for attr in model_attrs:
+        for attr in model_attrs.values():
             setattr(result, attr, NOT_SET)
 
         for db_attr, value in data.items():
