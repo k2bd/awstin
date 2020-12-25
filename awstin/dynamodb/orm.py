@@ -26,6 +26,11 @@ class BaseAttribute:
         # Set by Model
         self._name_on_model = None
 
+    def _convert_value(self, value):
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
     @property
     def name(self):
         if self._attribute_name is not None:
@@ -43,25 +48,28 @@ class Key(BaseAttribute):
     _query_type = BotoKey
 
     def begins_with(self, value):
-        return self._query_type(self.name).begins_with(value)
+        return self._query_type(self.name).begins_with(self._convert_value(value))
 
     def between(self, low, high):
-        return self._query_type(self.name).between(low, high)
+        return self._query_type(self.name).between(
+            self._convert_value(low),
+            self._convert_value(high),
+        )
 
     def __eq__(self, value):
-        return self._query_type(self.name).eq(value)
+        return self._query_type(self.name).eq(self._convert_value(value))
 
     def __gt__(self, value):
-        return self._query_type(self.name).gt(value)
+        return self._query_type(self.name).gt(self._convert_value(value))
 
     def __ge__(self, value):
-        return self._query_type(self.name).gte(value)
+        return self._query_type(self.name).gte(self._convert_value(value))
 
     def __lt__(self, value):
-        return self._query_type(self.name).lt(value)
+        return self._query_type(self.name).lt(self._convert_value(value))
 
     def __le__(self, value):
-        return self._query_type(self.name).lte(value)
+        return self._query_type(self.name).lte(self._convert_value(value))
 
 
 class Attr(Key):
@@ -72,25 +80,27 @@ class Attr(Key):
     _query_type = BotoAttr
 
     def attribute_type(self, value):
-        return self._query_type(self.name).attribute_type(value)
+        return self._query_type(self.name).attribute_type(
+            self._convert_value(value)
+        )
 
     def contains(self, value):
-        return self._query_type(self.name).contains(value)
+        return self._query_type(self.name).contains(self._convert_value(value))
 
     def exists(self):
         return self._query_type(self.name).exists()
 
     def in_(self, value):
-        return self._query_type(self.name).is_in(value)
+        return self._query_type(self.name).is_in(self._convert_value(value))
 
     def __ne__(self, value):
-        return self._query_type(self.name).ne(value)
+        return self._query_type(self.name).ne(self._convert_value(value))
 
     def not_exists(self):
         return self._query_type(self.name).not_exists()
 
 
-class ModelMeta(type):
+class DynamoModelMeta(type):
     def __getattribute__(self, name):
         attr = super().__getattribute__(name)
         if isinstance(attr, BaseAttribute):
@@ -108,7 +118,7 @@ class ModelMeta(type):
         return result
 
 
-class DynamoModel(metaclass=ModelMeta):
+class DynamoModel(metaclass=DynamoModelMeta):
     """
     Abstract class for defining DynamoDB data models.
 
