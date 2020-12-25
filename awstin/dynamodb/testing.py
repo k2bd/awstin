@@ -6,7 +6,7 @@ from awstin.dynamodb import DynamoDB
 
 @contextlib.contextmanager
 def temporary_dynamodb_table(
-        table_name,
+        data_model,
         hashkey_name,
         hashkey_type="S",
         sortkey_name=None,
@@ -18,8 +18,8 @@ def temporary_dynamodb_table(
 
     Parameters
     ----------
-    table_name : str
-        Name of the table to create
+    data_model : DynamoModel
+        Model to interface with this table
     hashkey_name : str
         Name of the hash key of the table
     hashkey_type : str, optional
@@ -36,6 +36,8 @@ def temporary_dynamodb_table(
     """
     # TODO: make filter more specific
     warnings.simplefilter("ignore", ResourceWarning)
+
+    table_name = data_model._table_name_
 
     dynamodb = DynamoDB()
 
@@ -89,7 +91,7 @@ def temporary_dynamodb_table(
         raise RuntimeError("Could not create table {!r}".format(table_name))
 
     try:
-        yield dynamodb[table_name]
+        yield dynamodb[data_model]
     finally:
         dynamodb.client.delete_table(TableName=table_name)
 

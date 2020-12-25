@@ -61,16 +61,16 @@ class DynamoDB:
 
         return tables
 
-    def __getitem__(self, key):
+    def __getitem__(self, data_model):
         """
-        Indexed access to DynamoDB tables.
+        Indexed access to DynamoDB tables via Python data models.
 
         Returns
         -------
         Table
             the dynamodb table, if it exists.
         """
-        return Table(self, key)
+        return Table(self, data_model)
 
 
 class Table:
@@ -94,7 +94,7 @@ class Table:
     Table("table_name")[("hashval", 123)]
     ```
     """
-    def __init__(self, dynamodb_client, table_name):
+    def __init__(self, dynamodb_client, data_model):
         """
         Paramters
         ---------
@@ -103,10 +103,11 @@ class Table:
         table_name : DynamoDB Table
             Table to convert into an awstin Table
         """
-        self.name = table_name
+        self.data_model = data_model
+        self.name = data_model._table_name_
 
         self._dynamodb = dynamodb_client
-        self._boto3_table = dynamodb_client.resource.Table(table_name)
+        self._boto3_table = dynamodb_client.resource.Table(self.name)
 
     def _get_primary_key(self, key):
         if isinstance(key, dict):
@@ -137,13 +138,15 @@ class Table:
         value of the partition key if there is no sort key
         """
         primary_key = self._get_primary_key(key)
-        return self._boto3_table.get_item(Key=primary_key)["Item"]
+        item = self._boto3_table.get_item(Key=primary_key)["Item"]
+        return self.data_model._from_dynamodb(item)
 
     def put_item(self, item):
         """
         Direct exposure of put_item
         """
-        return self._boto3_table.put_item(Item=item)
+        data = item._to_dynamodb()
+        return self._boto3_table.put_item(Item=data)
 
     def update_item(self, *args, **kwargs):
         """
@@ -159,28 +162,43 @@ class Table:
         primary_key = self._get_primary_key(key)
         self._boto3_table.delete_item(Key=primary_key)
 
-    def scan(self):
+    def scan(self, scan_filter=None):
         """
         Generate all items in the table, one at a time.
 
         Lazily queries for more items if needed.
+
+        Parameters
+        ----------
+        scan_filter : Query
+            An optional query constructed with awstin's query framework
 
         Yields
         ------
         dict
             an item in the table
         """
-        # TODO: scan filters
+        filter_kwargs = {}
 
-        results = self._boto3_table.scan()
-        items = results["Items"]
+        if scan_filter is not None:
+            filter_kwargs["FilterExpression"] = scan_filter
+
+        results = self._boto3_table.scan(**filter_kwargs)
+        items = [
+            self.data_model._from_dynamodb(item)
+            for item in results["Items"]
+        ]
         yield from items
 
         while "LastEvaluatedKey" in results:
             results = self._boto3_table.scan(
                 ExclusiveStartKey=results["LastEvaluatedKey"],
+                **filter_kwargs,
             )
-            items = results["Items"]
+            items = [
+                self.data_model._from_dynamodb(item)
+                for item in results["Items"]
+            ]
             yield from items
 
     # TODO: Batch Update

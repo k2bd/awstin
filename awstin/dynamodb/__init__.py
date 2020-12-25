@@ -1,1 +1,1 @@
-from .api import *  # noqa
+from .table import *  # noqa
