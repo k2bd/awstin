@@ -9,6 +9,8 @@ High-level utilities for building and testing AWS applications in Python.
 
 ## DynamoDB
 
+[![DynamoDB](https://img.shields.io/github/milestones/progress/k2bd/awstin/1)](https://github.com/k2bd/awstin/milestone/1)
+
 ### Production
 
 To use DynamoDB either the `TEST_DYNAMODB_ENDPOINT` (for integration
@@ -133,10 +135,6 @@ with temporary_dynamodb_table(User, "hashkey_name") as table:
     table.put_item(item)
 ```
 
-### Future Work
-
-See the [Milestone](https://github.com/k2bd/awstin/milestone/1) for more information on what's currently planned for DynamoDB support. Feel free to open an issue for anything that's missing.
-
 
 ## Lambdas
 
@@ -207,6 +205,8 @@ Websocket("endpoint_url", "dev").send("callback_url", "message")
 
 
 ## SNS
+
+[![SNS](https://img.shields.io/github/milestones/progress/k2bd/awstin/2)]((https://github.com/k2bd/awstin/milestone/2))
 
 ### Production
 
