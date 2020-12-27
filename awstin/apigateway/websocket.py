@@ -5,6 +5,7 @@ class Websocket:
     """
     Serverless-to-client push via websocket
     """
+
     def __init__(self, domain_name, stage=None):
         """
         Parameters
@@ -16,7 +17,7 @@ class Websocket:
         if stage:
             endpoint_url += f"/{stage}"
         self.api_client = boto3.client(
-            'apigatewaymanagementapi',
+            "apigatewaymanagementapi",
             endpoint_url=endpoint_url,
         )
 

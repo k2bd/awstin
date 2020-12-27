@@ -1,4 +1,3 @@
-
 def accept(principal_id, resource_arn):
     """
     Return an auth lambda response granting access to the given resource ARN
@@ -39,7 +38,7 @@ def reject(principal_id, resource_arn):
     return _auth_response(principal_id, resource_arn, "Deny")
 
 
-def unauthorized(body='Unauthorized'):
+def unauthorized(body="Unauthorized"):
     """
     Return an auth lambda response indicating the requester is unauthorized.
 
@@ -54,12 +53,12 @@ def unauthorized(body='Unauthorized'):
         Auth lambda response
     """
     return {
-        'statusCode': 401,
-        'body': body,
+        "statusCode": 401,
+        "body": body,
     }
 
 
-def invalid(body='Invalid'):
+def invalid(body="Invalid"):
     """
     Return an auth lambda response indicating the request is invalid.
 
@@ -74,8 +73,8 @@ def invalid(body='Invalid'):
         Auth lambda response
     """
     return {
-        'statusCode': 500,
-        'body': body,
+        "statusCode": 500,
+        "body": body,
     }
 
 
@@ -92,6 +91,6 @@ def _auth_response(principal_id, resource_arn, effect):
                     "Effect": effect,
                     "Resource": [resource_arn],
                 }
-            ]
+            ],
         },
     }

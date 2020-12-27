@@ -48,7 +48,7 @@ class TestAuthHandler(unittest.TestCase):
                         "Effect": "Allow",
                         "Resource": ["arn123"],
                     }
-                ]
+                ],
             },
         }
         self.assertEqual(result, expected_result)
@@ -76,7 +76,7 @@ class TestAuthHandler(unittest.TestCase):
                         "Effect": "Deny",
                         "Resource": ["arn123"],
                     }
-                ]
+                ],
             },
         }
         self.assertEqual(result, expected_result)
@@ -93,8 +93,8 @@ class TestAuthHandler(unittest.TestCase):
         result = token_auth(event, context)
 
         expected_result = {
-            'statusCode': 401,
-            'body': 'Unauthorized',
+            "statusCode": 401,
+            "body": "Unauthorized",
         }
         self.assertEqual(result, expected_result)
 
@@ -110,7 +110,7 @@ class TestAuthHandler(unittest.TestCase):
         result = token_auth(event, context)
 
         expected_result = {
-            'statusCode': 500,
-            'body': 'Invalid',
+            "statusCode": 500,
+            "body": "Invalid",
         }
         self.assertEqual(result, expected_result)

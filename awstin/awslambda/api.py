@@ -34,5 +34,7 @@ def lambda_handler(event_parser):
                 result = func(args)
             logger.info(f"Result: {result!r}")
             return result
+
         return wrapped
+
     return handler

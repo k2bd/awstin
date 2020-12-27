@@ -11,6 +11,7 @@ class SNSTopic:
     """
     A client for typical use of an SNS topic
     """
+
     def __init__(self, topic_name):
         """
         Parameters

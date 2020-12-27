@@ -7,12 +7,12 @@ UNLIKELY_ENV_VAR = "THIS_ENV_VAR_IS_UNLIKELY_TO_BE_IN_USE_150y71i1"
 
 
 class TestSetEnv(unittest.TestCase):
-
     def setUp(self):
         # Always remove the used environment variable
         def reset_env_var():
             if UNLIKELY_ENV_VAR in os.environ:
                 del os.environ[UNLIKELY_ENV_VAR]
+
         self.addCleanup(reset_env_var)
 
     def test_temp_set_new_env_var(self):
