@@ -102,9 +102,7 @@ class Attr(Key):
         value : str
             Index for a DynamoDB attribute type (e.g. "N" for Number)
         """
-        return self._query_type(self.name).attribute_type(
-            to_decimal(value)
-        )
+        return self._query_type(self.name).attribute_type(to_decimal(value))
 
     def contains(self, value):
         """
