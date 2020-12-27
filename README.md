@@ -83,9 +83,35 @@ for user in users_table.scan(scan_filter):
     ban_user(user)
 ```
 
+Queries must be given a query expression and can optionally be given a filter expression. Query expressions must represent valid DynamoDB queries.
+
+```python
+class Student(DynamoModel):
+    _table_name_ = "Students"
+
+    # Hash key
+    name = Key()
+
+    # Sort key
+    year = Key()
+
+    homeroom = Attr()
+
+
+students_table = dynamodb[Student]
+
+query_expression = (Student.name == "John") & (Student.year >= 10)
+filter_expression = Student.homeroom == "Smith"
+
+results = students_table.query(
+    query_expression=query_expression,
+    filter_expression=filter_expression,
+)
+```
+
 **Float and Decimal**
 
-`awstin` does its best to convert between `float` and `Decimal` so the user doesn't need to worry about it. 
+Floats should be used when working with DynamoDB through `awstin`. Conversions between float and Decimal is done internally.
 
 
 ### Testing
@@ -106,6 +132,10 @@ with temporary_dynamodb_table(User, "hashkey_name") as table:
     )
     table.put_item(item)
 ```
+
+### Future Work
+
+See the [Milestone](https://github.com/k2bd/awstin/milestone/1) for more information on what's currently planned for DynamoDB support. Feel free to open an issue for anything that's missing.
 
 
 ## Lambdas

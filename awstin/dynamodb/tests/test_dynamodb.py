@@ -595,15 +595,22 @@ class TestDynamoDB(unittest.TestCase):
                 hashkey="interesting",
                 another_attr=55,
             )
-            miss = ModelWithoutSortkey(
+            miss_hash = ModelWithoutSortkey(
                 hashkey="typewriter",
+                another_attr=100,
+            )
+            miss_attr = ModelWithoutSortkey(
+                hashkey="vermouth",
                 another_attr=99,
             )
 
             table.put_item(hit)
-            table.put_item(miss)
+            table.put_item(miss_hash)
+            table.put_item(miss_attr)
 
-            attr_filter = ModelWithoutSortkey.another_attr.in_([55, 100])
+            attr_filter = ModelWithoutSortkey.another_attr.in_(
+                [55, 100]
+            ) & ModelWithoutSortkey.hashkey.in_(["interesting", "vermouth"])
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
@@ -669,9 +676,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (
-                (ModelWithSortkey.sortkey.begins_with("abc"))
-                & (ModelWithSortkey.hashkey == "a")
+            query_expression = (ModelWithSortkey.sortkey.begins_with("abc")) & (
+                ModelWithSortkey.hashkey == "a"
             )
 
             items = list(table.query(query_expression))
@@ -696,9 +702,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (
-                (ModelWithSortkey.sortkey.between("a", "e"))
-                & (ModelWithSortkey.hashkey == "a")
+            query_expression = (ModelWithSortkey.sortkey.between("a", "e")) & (
+                ModelWithSortkey.hashkey == "a"
             )
 
             items = list(table.query(query_expression=query_expression))
@@ -752,9 +757,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_hash)
             table.put_item(miss_sort)
 
-            key_filter = (
-                (ModelWithSortkey.hashkey == "a")
-                & (ModelWithSortkey.sortkey == "interesting")
+            key_filter = (ModelWithSortkey.hashkey == "a") & (
+                ModelWithSortkey.sortkey == "interesting"
             )
 
             items = list(table.query(query_expression=key_filter))
@@ -778,9 +782,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (
-                (ModelWithSortkey.sortkey > "d")
-                & (ModelWithSortkey.hashkey == "a")
+            query_expression = (ModelWithSortkey.sortkey > "d") & (
+                ModelWithSortkey.hashkey == "a"
             )
 
             items = list(table.query(query_expression=query_expression))
@@ -805,9 +808,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (
-                (ModelWithSortkey.sortkey >= "h")
-                & (ModelWithSortkey.hashkey == "a")
+            query_expression = (ModelWithSortkey.sortkey >= "h") & (
+                ModelWithSortkey.hashkey == "a"
             )
 
             items = list(table.query(query_expression=query_expression))
@@ -832,9 +834,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (
-                (ModelWithSortkey.sortkey < "c")
-                & (ModelWithSortkey.hashkey == "a")
+            query_expression = (ModelWithSortkey.sortkey < "c") & (
+                ModelWithSortkey.hashkey == "a"
             )
 
             items = list(table.query(query_expression=query_expression))
@@ -859,9 +860,8 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (
-                (ModelWithSortkey.sortkey <= "azzzzzzz")
-                & (ModelWithSortkey.hashkey == "a")
+            query_expression = (ModelWithSortkey.sortkey <= "azzzzzzz") & (
+                ModelWithSortkey.hashkey == "a"
             )
 
             items = list(table.query(query_expression=query_expression))
@@ -871,4 +871,54 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(item, hit)
 
     def test_query_and_filter(self):
-        self.fail("TODO")
+        class Student(DynamoModel):
+            _table_name_ = "Students"
+
+            # Hash key
+            name = Key()
+
+            # Sort key
+            year = Key()
+
+            homeroom = Attr()
+
+            def __eq__(self, other):
+                if isinstance(other, Student):
+                    return (
+                        (self.name == other.name)
+                        & (self.year == other.year)
+                        & (self.homeroom == other.homeroom)
+                    )
+                return NotImplemented
+
+        with temporary_dynamodb_table(
+            Student,
+            "name",
+            hashkey_type="S",
+            sortkey_name="year",
+            sortkey_type="N",
+        ) as students_table:
+
+            item1 = Student(name="Cecil", year=10, homeroom="Faba")
+            item2 = Student(name="Cecil", year=11, homeroom="Aaa")
+            item3 = Student(name="Cecil", year=12, homeroom="Faba")
+            item4 = Student(name="Cloud", year=12, homeroom="Bbb")
+
+            students_table.put_item(item1)
+            students_table.put_item(item2)
+            students_table.put_item(item3)
+            students_table.put_item(item4)
+
+            query_expression = (Student.name == "Cecil") & (Student.year > 10)
+            filter_expression = Student.homeroom == "Faba"
+
+            results = list(
+                students_table.query(
+                    query_expression=query_expression,
+                    filter_expression=filter_expression,
+                )
+            )
+
+            self.assertEqual(len(results), 1)
+            (result,) = results
+            self.assertEqual(result, item3)

@@ -87,14 +87,6 @@ class Key(BaseAttribute):
     def __le__(self, value):
         return self._query_type(self.name).lte(to_decimal(value))
 
-
-class Attr(Key):
-    """
-    Used to define and query non-key attributes on a dynamodb table data model
-    """
-
-    _query_type = BotoAttr
-
     def attribute_type(self, value):
         """
         Filter results by attribute type
@@ -104,7 +96,7 @@ class Attr(Key):
         value : str
             Index for a DynamoDB attribute type (e.g. "N" for Number)
         """
-        return self._query_type(self.name).attribute_type(to_decimal(value))
+        return BotoAttr(self.name).attribute_type(to_decimal(value))
 
     def contains(self, value):
         """
@@ -116,13 +108,13 @@ class Attr(Key):
         values : Any
             Result must contain this item
         """
-        return self._query_type(self.name).contains(to_decimal(value))
+        return BotoAttr(self.name).contains(to_decimal(value))
 
     def exists(self):
         """
         Filter results by existence of an attribute
         """
-        return self._query_type(self.name).exists()
+        return BotoAttr(self.name).exists()
 
     def in_(self, values):
         """
@@ -133,17 +125,25 @@ class Attr(Key):
         values : list of Any
             Allowed values of returned results
         """
-        in_vals = [to_decimal(value) for value in values]
-        return self._query_type(self.name).is_in(in_vals)
+        in_values = [to_decimal(value) for value in values]
+        return BotoAttr(self.name).is_in(in_values)
 
     def __ne__(self, value):
-        return self._query_type(self.name).ne(to_decimal(value))
+        return BotoAttr(self.name).ne(to_decimal(value))
 
     def not_exists(self):
         """
         Filter results by non-existence of an attribute
         """
-        return self._query_type(self.name).not_exists()
+        return BotoAttr(self.name).not_exists()
+
+
+class Attr(Key):
+    """
+    Used to define and query non-key attributes on a dynamodb table data model
+    """
+
+    _query_type = BotoAttr
 
 
 class DynamoModelMeta(type):
@@ -171,11 +171,11 @@ class DynamoModel(metaclass=DynamoModelMeta):
     For example:
     ```python
     class MyDataModel(DynamoModel):
-        hashkey_name = Key()
+        hashkey_name = HashKey()
 
         # The name of the DynamoDB attribute differs from the
         # name on the data model
-        sortkey = Key("sortkeyName")
+        sortkey = SortKey("sortkeyName")
 
         an_attribute = Attr()
 
