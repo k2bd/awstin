@@ -661,7 +661,7 @@ class TestDynamoDB(unittest.TestCase):
                 another_attr="defworld",
             )
             miss = ModelWithSortkey(
-                hashkey="b",
+                hashkey="a",
                 sortkey="hello",
                 another_attr="defworld",
             )
@@ -669,7 +669,10 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = ModelWithSortkey.sortkey.begins_with("abc")
+            query_expression = (
+                (ModelWithSortkey.sortkey.begins_with("abc"))
+                & (ModelWithSortkey.hashkey == "a")
+            )
 
             items = list(table.query(query_expression))
 
@@ -685,7 +688,7 @@ class TestDynamoDB(unittest.TestCase):
                 another_attr=1.1,
             )
             miss = ModelWithSortkey(
-                hashkey="b",
+                hashkey="a",
                 sortkey="yellow",
                 another_attr=2.2,
             )
@@ -693,7 +696,10 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = ModelWithSortkey.sortkey.between("a", "e")
+            query_expression = (
+                (ModelWithSortkey.sortkey.between("a", "e"))
+                & (ModelWithSortkey.hashkey == "a")
+            )
 
             items = list(table.query(query_expression=query_expression))
 
@@ -701,7 +707,7 @@ class TestDynamoDB(unittest.TestCase):
             (item,) = items
             self.assertEqual(item, hit)
 
-    def test_query_eq(self):
+    def test_query_eq_hash(self):
         with self.table_with_str_sortkey as table:
             hit = ModelWithSortkey(
                 hashkey="a",
@@ -717,16 +723,41 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            key_filter = ModelWithSortkey.sortkey == "interesting"
+            key_filter = ModelWithSortkey.hashkey == "a"
 
             items = list(table.query(query_expression=key_filter))
             self.assertEqual(len(items), 1)
             (item,) = items
             self.assertEqual(item, hit)
 
-            attr_filter = ModelWithSortkey.another_attr == 55
+    def test_query_eq_hash_and_sort(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="interesting",
+                another_attr=55,
+            )
+            miss_hash = ModelWithSortkey(
+                hashkey="b",
+                sortkey="interesting",
+                another_attr=100,
+            )
+            miss_sort = ModelWithSortkey(
+                hashkey="a",
+                sortkey="typewriter",
+                another_attr=100,
+            )
 
-            items = list(table.query(query_expression=attr_filter))
+            table.put_item(hit)
+            table.put_item(miss_hash)
+            table.put_item(miss_sort)
+
+            key_filter = (
+                (ModelWithSortkey.hashkey == "a")
+                & (ModelWithSortkey.sortkey == "interesting")
+            )
+
+            items = list(table.query(query_expression=key_filter))
             self.assertEqual(len(items), 1)
             (item,) = items
             self.assertEqual(item, hit)
@@ -739,7 +770,7 @@ class TestDynamoDB(unittest.TestCase):
                 another_attr=77.5,
             )
             miss = ModelWithSortkey(
-                hashkey="b",
+                hashkey="a",
                 sortkey="afternoon",
                 another_attr=20.1,
             )
@@ -747,7 +778,10 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = ModelWithSortkey.sortkey > "d"
+            query_expression = (
+                (ModelWithSortkey.sortkey > "d")
+                & (ModelWithSortkey.hashkey == "a")
+            )
 
             items = list(table.query(query_expression=query_expression))
 
@@ -763,7 +797,7 @@ class TestDynamoDB(unittest.TestCase):
                 another_attr=20.1,
             )
             miss = ModelWithSortkey(
-                hashkey="b",
+                hashkey="a",
                 sortkey="afternoon",
                 another_attr=30,
             )
@@ -771,7 +805,10 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = ModelWithSortkey.sortkey >= "h"
+            query_expression = (
+                (ModelWithSortkey.sortkey >= "h")
+                & (ModelWithSortkey.hashkey == "a")
+            )
 
             items = list(table.query(query_expression=query_expression))
 
@@ -787,7 +824,7 @@ class TestDynamoDB(unittest.TestCase):
                 another_attr=1,
             )
             miss = ModelWithSortkey(
-                hashkey="b",
+                hashkey="a",
                 sortkey="zebra",
                 another_attr=2,
             )
@@ -795,7 +832,10 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = ModelWithSortkey.sortkey < "c"
+            query_expression = (
+                (ModelWithSortkey.sortkey < "c")
+                & (ModelWithSortkey.hashkey == "a")
+            )
 
             items = list(table.query(query_expression=query_expression))
 
@@ -811,7 +851,7 @@ class TestDynamoDB(unittest.TestCase):
                 another_attr=1,
             )
             miss = ModelWithSortkey(
-                hashkey="b",
+                hashkey="a",
                 sortkey="zebra",
                 another_attr=2,
             )
@@ -819,7 +859,10 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = ModelWithSortkey.sortkey <= "azzzzzzz"
+            query_expression = (
+                (ModelWithSortkey.sortkey <= "azzzzzzz")
+                & (ModelWithSortkey.hashkey == "a")
+            )
 
             items = list(table.query(query_expression=query_expression))
 
