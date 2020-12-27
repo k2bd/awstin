@@ -1,7 +1,8 @@
 import unittest
 from unittest import mock
 
-from awstin.apigateway.websocket import __name__ as WS_NAME, Websocket
+from awstin.apigateway.websocket import Websocket
+from awstin.apigateway.websocket import __name__ as WS_NAME
 
 
 class TestWebsocket(unittest.TestCase):
@@ -16,8 +17,7 @@ class TestWebsocket(unittest.TestCase):
             socket.send("callbackurl", "message")
 
         m_aws.assert_called_once_with(
-            "apigatewaymanagementapi",
-            endpoint_url="https://endpointurl/dev"
+            "apigatewaymanagementapi", endpoint_url="https://endpointurl/dev"
         )
         mock_api_client.post_to_connection.assert_called_once_with(
             Data="message",

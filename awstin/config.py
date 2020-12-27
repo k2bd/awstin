@@ -12,7 +12,7 @@ def aws_config(timeout=5.0, max_retries=3, endpoint=None):
     Parameters
     ----------
     timeout : float, optional
-        Timeout for establishing a conneciton to DynamoDB (default 5.0)
+        Timeout for establishing a connection to DynamoDB (default 5.0)
     max_retries : int, optional
         Max retries for establishing a connection to DynamoDB (default 3)
     endpoint : str or None, optional
@@ -42,10 +42,7 @@ def aws_config(timeout=5.0, max_retries=3, endpoint=None):
 
     config = Config(
         connect_timeout=timeout,
-        retries={'max_attempts': max_retries},
+        retries={"max_attempts": max_retries},
     )
 
-    return {
-        "config": config,
-        **kwargs
-    }
+    return {"config": config, **kwargs}

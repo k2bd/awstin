@@ -6,20 +6,21 @@ from awstin.dynamodb import DynamoDB
 
 @contextlib.contextmanager
 def temporary_dynamodb_table(
-        table_name,
-        hashkey_name,
-        hashkey_type="S",
-        sortkey_name=None,
-        sortkey_type="S",
-        delay=5.0,
-        max_attempts=10,):
+    data_model,
+    hashkey_name,
+    hashkey_type="S",
+    sortkey_name=None,
+    sortkey_type="S",
+    delay=5.0,
+    max_attempts=10,
+):
     """
     Context manager creating a temporary DynamoDB table for testing.
 
     Parameters
     ----------
-    table_name : str
-        Name of the table to create
+    data_model : DynamoModel
+        Model to interface with this table
     hashkey_name : str
         Name of the hash key of the table
     hashkey_type : str, optional
@@ -37,31 +38,33 @@ def temporary_dynamodb_table(
     # TODO: make filter more specific
     warnings.simplefilter("ignore", ResourceWarning)
 
+    table_name = data_model._table_name_
+
     dynamodb = DynamoDB()
 
     attribute_definitions = [
         {
-            'AttributeName': hashkey_name,
-            'AttributeType': hashkey_type,
+            "AttributeName": hashkey_name,
+            "AttributeType": hashkey_type,
         },
     ]
     key_schema = [
         {
-            'AttributeName': hashkey_name,
-            'KeyType': 'HASH',
+            "AttributeName": hashkey_name,
+            "KeyType": "HASH",
         },
     ]
     if sortkey_name is not None and sortkey_type is not None:
         attribute_definitions.append(
             {
-                'AttributeName': sortkey_name,
-                'AttributeType': sortkey_type,
+                "AttributeName": sortkey_name,
+                "AttributeType": sortkey_type,
             }
         )
         key_schema.append(
             {
-                'AttributeName': sortkey_name,
-                'KeyType': 'RANGE',
+                "AttributeName": sortkey_name,
+                "KeyType": "RANGE",
             },
         )
 
@@ -69,10 +72,7 @@ def temporary_dynamodb_table(
         TableName=table_name,
         AttributeDefinitions=attribute_definitions,
         KeySchema=key_schema,
-        ProvisionedThroughput={
-            'ReadCapacityUnits': 123,
-            'WriteCapacityUnits': 123
-        },
+        ProvisionedThroughput={"ReadCapacityUnits": 123, "WriteCapacityUnits": 123},
     )
 
     exists_waiter = dynamodb.client.get_waiter("table_exists")
@@ -81,24 +81,24 @@ def temporary_dynamodb_table(
     result = exists_waiter.wait(
         TableName=table_name,
         WaiterConfig={
-            'Delay': delay,
-            'MaxAttempts': max_attempts,
-        }
+            "Delay": delay,
+            "MaxAttempts": max_attempts,
+        },
     )
     if result is not None:
         raise RuntimeError("Could not create table {!r}".format(table_name))
 
     try:
-        yield dynamodb[table_name]
+        yield dynamodb[data_model]
     finally:
         dynamodb.client.delete_table(TableName=table_name)
 
         result = not_exists_waiter.wait(
             TableName=table_name,
             WaiterConfig={
-                'Delay': delay,
-                'MaxAttempts': max_attempts,
-            }
+                "Delay": delay,
+                "MaxAttempts": max_attempts,
+            },
         )
         if result is not None:
             msg = "Could not delete table {!r}"
