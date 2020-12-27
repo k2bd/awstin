@@ -492,7 +492,7 @@ class TestDynamoDB(unittest.TestCase):
     def test_filter_le(self):
         with self.table_without_sortkey as table:
             hit = ModelWithoutSortkey(
-                hashkey="azzzzzzz",
+                hashkey="apple",
                 another_attr=1,
             )
             miss_key = ModelWithoutSortkey(
@@ -508,7 +508,7 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (ModelWithoutSortkey.hashkey <= "azzzzzzz") & (
+            scan_filter = (ModelWithoutSortkey.hashkey <= "apple") & (
                 ModelWithoutSortkey.another_attr <= 2
             )
 
@@ -848,7 +848,7 @@ class TestDynamoDB(unittest.TestCase):
         with self.table_with_str_sortkey as table:
             hit = ModelWithSortkey(
                 hashkey="a",
-                sortkey="azzzzzzz",
+                sortkey="apple",
                 another_attr=1,
             )
             miss = ModelWithSortkey(
@@ -860,7 +860,7 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(hit)
             table.put_item(miss)
 
-            query_expression = (ModelWithSortkey.sortkey <= "azzzzzzz") & (
+            query_expression = (ModelWithSortkey.sortkey <= "apple") & (
                 ModelWithSortkey.hashkey == "a"
             )
 

@@ -1,7 +1,6 @@
 import os
 
 import boto3
-from boto3.dynamodb.conditions import ConditionExpressionBuilder
 
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
