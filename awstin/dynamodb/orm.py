@@ -133,9 +133,7 @@ class Attr(Key):
         values : list of Any
             Allowed values of returned results
         """
-        in_vals = [
-            to_decimal(value) for value in values
-        ]
+        in_vals = [to_decimal(value) for value in values]
         return self._query_type(self.name).is_in(in_vals)
 
     def __ne__(self, value):
