@@ -57,6 +57,7 @@ user = User(
     favorite_color="Blue",
     account_age=120,
 )
+users_table.put_item(user)
 
 # Tables that only have a partition key can be accessed directly by their
 # partition key
@@ -98,10 +99,11 @@ from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
 with temporary_dynamodb_table(User, "hashkey_name") as table:
-    item = {
-        "hashkey_name": "test_value",
-        "another_key": 5,
-    }
+    item = User(
+        user_id="user456",
+        favorite_color="Green",
+        account_age=333,
+    )
     table.put_item(item)
 ```
 
