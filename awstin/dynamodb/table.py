@@ -1,6 +1,7 @@
 import os
 
 import boto3
+from boto3.dynamodb.conditions import ConditionExpressionBuilder
 
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
@@ -200,6 +201,25 @@ class Table:
             results = self._boto3_table.scan(
                 ExclusiveStartKey=results["LastEvaluatedKey"],
                 **filter_kwargs,
+            )
+            items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+            yield from items
+
+    def query(self, query_expression, filter_expression=None):
+        query_kwargs = {}
+
+        query_kwargs["KeyConditionExpression"] = query_expression
+        if filter_expression is not None:
+            query_kwargs["FilterExpression"] = filter_expression
+
+        results = self._boto3_table.query(**query_kwargs)
+        items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+        yield from items
+
+        while "LastEvaluatedKey" in results:
+            results = self._boto3_table.query(
+                ExclusiveStartKey=results["LastEvaluatedKey"],
+                **query_kwargs,
             )
             items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
             yield from items

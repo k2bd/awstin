@@ -52,6 +52,10 @@ class TestDynamoDB(unittest.TestCase):
             ModelWithSortkey, "hashkey", sortkey_name="sortkey", sortkey_type="N"
         )
 
+        self.table_with_str_sortkey = temporary_dynamodb_table(
+            ModelWithSortkey, "hashkey", sortkey_name="sortkey", sortkey_type="S"
+        )
+
     def test_dynamodb_table(self):
         with self.table_without_sortkey as table:
             test_item = ModelWithoutSortkey(
@@ -648,3 +652,180 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(item, hit)
 
             self.assertTrue(item.another_attr is NOT_SET)
+
+    def test_query_begins_with(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="abchello",
+                another_attr="defworld",
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="hello",
+                another_attr="defworld",
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            query_expression = ModelWithSortkey.sortkey.begins_with("abc")
+
+            items = list(table.query(query_expression))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_between(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="carving",
+                another_attr=1.1,
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="yellow",
+                another_attr=2.2,
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            query_expression = ModelWithSortkey.sortkey.between("a", "e")
+
+            items = list(table.query(query_expression=query_expression))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_eq(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="interesting",
+                another_attr=55,
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="typewriter",
+                another_attr=100,
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            key_filter = ModelWithSortkey.sortkey == "interesting"
+
+            items = list(table.query(query_expression=key_filter))
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+            attr_filter = ModelWithSortkey.another_attr == 55
+
+            items = list(table.query(query_expression=attr_filter))
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_gt(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="hello",
+                another_attr=77.5,
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="afternoon",
+                another_attr=20.1,
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            query_expression = ModelWithSortkey.sortkey > "d"
+
+            items = list(table.query(query_expression=query_expression))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_ge(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="hello",
+                another_attr=20.1,
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="afternoon",
+                another_attr=30,
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            query_expression = ModelWithSortkey.sortkey >= "h"
+
+            items = list(table.query(query_expression=query_expression))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_lt(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="aardvark",
+                another_attr=1,
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="zebra",
+                another_attr=2,
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            query_expression = ModelWithSortkey.sortkey < "c"
+
+            items = list(table.query(query_expression=query_expression))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_le(self):
+        with self.table_with_str_sortkey as table:
+            hit = ModelWithSortkey(
+                hashkey="a",
+                sortkey="azzzzzzz",
+                another_attr=1,
+            )
+            miss = ModelWithSortkey(
+                hashkey="b",
+                sortkey="zebra",
+                another_attr=2,
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            query_expression = ModelWithSortkey.sortkey <= "azzzzzzz"
+
+            items = list(table.query(query_expression=query_expression))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_query_and_filter(self):
+        self.fail("TODO")
