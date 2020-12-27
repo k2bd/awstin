@@ -26,7 +26,7 @@ class TestSNSTopic(unittest.TestCase):
         SNSTopic("name_of_topic")
         topics = self.sns_client.list_topics()["Topics"]
         self.assertEqual(len(topics), 1)
-        topic, = topics
+        (topic,) = topics
         self.assertTrue(topic["TopicArn"].endswith("name_of_topic"))
 
     def test_post_to_sns_topic(self):

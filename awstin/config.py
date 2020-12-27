@@ -42,10 +42,7 @@ def aws_config(timeout=5.0, max_retries=3, endpoint=None):
 
     config = Config(
         connect_timeout=timeout,
-        retries={'max_attempts': max_retries},
+        retries={"max_attempts": max_retries},
     )
 
-    return {
-        "config": config,
-        **kwargs
-    }
+    return {"config": config, **kwargs}

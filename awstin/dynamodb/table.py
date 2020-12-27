@@ -16,6 +16,7 @@ class DynamoDB:
 
     Tables are accessed via data models. See documentation for details.
     """
+
     def __init__(self, timeout=5.0, max_retries=3):
         """
         Parameters
@@ -40,8 +41,8 @@ class DynamoDB:
             max_retries=max_retries,
             endpoint=test_endpoint,
         )
-        self.client = boto3.client('dynamodb', **self.config)
-        self.resource = boto3.resource('dynamodb', **self.config)
+        self.client = boto3.client("dynamodb", **self.config)
+        self.resource = boto3.resource("dynamodb", **self.config)
 
     def list_tables(self):
         """
@@ -58,7 +59,7 @@ class DynamoDB:
         while "LastEvaluatedTableName" in response:
             response = self.client.list_tables(
                 Limit=_PAGE_SIZE,
-                ExclusiveStartTableName=response["LastEvaluatedTableName"]
+                ExclusiveStartTableName=response["LastEvaluatedTableName"],
             )
             tables.extend(response["TableNames"])
 
@@ -97,6 +98,7 @@ class Table:
     DynamoDB()[TableModel][("hashval", 123)]
     ```
     """
+
     def __init__(self, dynamodb_client, data_model):
         """
         Paramters
@@ -120,20 +122,20 @@ class Table:
             table_description = self._dynamodb.client.describe_table(
                 TableName=self.name,
             )
-            partition_key, = [
+            (partition_key,) = [
                 entry["AttributeName"]
                 for entry in table_description["Table"]["KeySchema"]
                 if entry["KeyType"] == "HASH"
             ]
             if isinstance(key, tuple):
-                sort_key, = [
+                (sort_key,) = [
                     entry["AttributeName"]
                     for entry in table_description["Table"]["KeySchema"]
                     if entry["KeyType"] == "RANGE"
                 ]
                 primary_key = {
                     partition_key: to_decimal(key[0]),
-                    sort_key: to_decimal(key[1])
+                    sort_key: to_decimal(key[1]),
                 }
             else:
                 primary_key = {partition_key: to_decimal(key)}
@@ -191,10 +193,7 @@ class Table:
             filter_kwargs["FilterExpression"] = scan_filter
 
         results = self._boto3_table.scan(**filter_kwargs)
-        items = [
-            self.data_model._from_dynamodb(item)
-            for item in results["Items"]
-        ]
+        items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
         yield from items
 
         while "LastEvaluatedKey" in results:
@@ -202,10 +201,7 @@ class Table:
                 ExclusiveStartKey=results["LastEvaluatedKey"],
                 **filter_kwargs,
             )
-            items = [
-                self.data_model._from_dynamodb(item)
-                for item in results["Items"]
-            ]
+            items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
             yield from items
 
     # TODO: Batch Update

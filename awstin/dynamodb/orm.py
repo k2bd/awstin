@@ -1,6 +1,7 @@
 from typing import Union
 
-from boto3.dynamodb.conditions import Attr as BotoAttr, Key as BotoKey
+from boto3.dynamodb.conditions import Attr as BotoAttr
+from boto3.dynamodb.conditions import Key as BotoKey
 
 from awstin.dynamodb.utils import from_decimal, to_decimal
 
@@ -9,6 +10,7 @@ class NotSet:
     """
     A value of an attribute on a data model is not present in a DynamoDB result
     """
+
     def __str__(self):
         return "<<Attribute not set>>"
 
@@ -180,6 +182,7 @@ class DynamoModel(metaclass=DynamoModelMeta):
         another_attribute = Attr("attributeName")
     ```
     """
+
     def __init__(self, **kwargs):
         model_attrs = type(self)._dynamodb_attributes().values()
 
@@ -206,10 +209,7 @@ class DynamoModel(metaclass=DynamoModelMeta):
                 if type(value) in [list, set, tuple]:
                     value = type(value)(from_decimal(v) for v in value)
                 elif type(value) is dict:
-                    value = {
-                        from_decimal(k): from_decimal(v)
-                        for k, v in value.items()
-                    }
+                    value = {from_decimal(k): from_decimal(v) for k, v in value.items()}
                 else:
                     value = from_decimal(value)
                 setattr(result, model_attrs[db_attr], value)
@@ -227,10 +227,7 @@ class DynamoModel(metaclass=DynamoModelMeta):
                 if type(value) in [list, set, tuple]:
                     value = type(value)(to_decimal(v) for v in value)
                 elif type(value) is dict:
-                    value = {
-                        to_decimal(k): to_decimal(v)
-                        for k, v in value.items()
-                    }
+                    value = {to_decimal(k): to_decimal(v) for k, v in value.items()}
                 else:
                     value = to_decimal(value)
                 result[dynamo_name] = value

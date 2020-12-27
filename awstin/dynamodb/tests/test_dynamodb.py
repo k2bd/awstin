@@ -2,7 +2,7 @@ import unittest
 from contextlib import ExitStack
 
 import awstin.dynamodb.table as ddb_table
-from awstin.dynamodb import Attr, DynamoDB, DynamoModel, Key, NOT_SET
+from awstin.dynamodb import NOT_SET, Attr, DynamoDB, DynamoModel, Key
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
@@ -49,10 +49,7 @@ class TestDynamoDB(unittest.TestCase):
         )
 
         self.table_with_sortkey = temporary_dynamodb_table(
-            ModelWithSortkey,
-            "hashkey",
-            sortkey_name="sortkey",
-            sortkey_type="N"
+            ModelWithSortkey, "hashkey", sortkey_name="sortkey", sortkey_type="N"
         )
 
     def test_dynamodb_table(self):
@@ -104,10 +101,7 @@ class TestDynamoDB(unittest.TestCase):
             )
             table.put_item(test_item)
 
-            self.assertEqual(
-                table[{"hashkey": "aaa", "sortkey": 555}],
-                test_item
-            )
+            self.assertEqual(table[{"hashkey": "aaa", "sortkey": 555}], test_item)
 
     def test_dynamodb_get_item_with_unset_attribute(self):
         with self.table_without_sortkey as table:
@@ -169,9 +163,11 @@ class TestDynamoDB(unittest.TestCase):
 
         with ExitStack() as stack:
             for i in range(11):
+
                 class Cls(DynamoModel):
-                    _table_name_ = "abc"+str(i)
-                table_ctx = temporary_dynamodb_table(Cls, "def"+str(i))
+                    _table_name_ = "abc" + str(i)
+
+                table_ctx = temporary_dynamodb_table(Cls, "def" + str(i))
                 stack.enter_context(table_ctx)
 
             self.assertEqual(len(dynamodb.list_tables()), 11)
@@ -184,19 +180,12 @@ class TestDynamoDB(unittest.TestCase):
 
             def __eq__(self, other):
                 if isinstance(other, BigItem):
-                    return (
-                        self.pkey == other.pkey
-                        and self.bigstring == other.bigstring
-                    )
+                    return self.pkey == other.pkey and self.bigstring == other.bigstring
                 return NotImplemented
 
         # Page size of DynamoDB item returns is 1MB. Add ~2.2MB of items
         add_items = [
-            BigItem(
-                pkey="item "+str(i),
-                bigstring="a" * 100000
-            )
-            for i in range(22)
+            BigItem(pkey="item " + str(i), bigstring="a" * 100000) for i in range(22)
         ]
         with temporary_dynamodb_table(BigItem, "pkey") as table:
             for item in add_items:
@@ -342,15 +331,14 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (
-                ModelWithoutSortkey.hashkey.begins_with("abc")
-                & ModelWithoutSortkey.another_attr.begins_with("def")
-            )
+            scan_filter = ModelWithoutSortkey.hashkey.begins_with(
+                "abc"
+            ) & ModelWithoutSortkey.another_attr.begins_with("def")
 
             items = list(table.scan(scan_filter=scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_between(self):
@@ -372,15 +360,14 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (
-                ModelWithoutSortkey.hashkey.between("a", "e")
-                & ModelWithoutSortkey.another_attr.between(0.5, 4.12)
-            )
+            scan_filter = ModelWithoutSortkey.hashkey.between(
+                "a", "e"
+            ) & ModelWithoutSortkey.another_attr.between(0.5, 4.12)
 
             items = list(table.scan(scan_filter=scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_eq(self):
@@ -401,14 +388,14 @@ class TestDynamoDB(unittest.TestCase):
 
             items = list(table.scan(scan_filter=key_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
             attr_filter = ModelWithoutSortkey.another_attr == 55
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_gt(self):
@@ -430,15 +417,14 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (
-                (ModelWithoutSortkey.hashkey > "d")
-                & (ModelWithoutSortkey.another_attr > 20)
+            scan_filter = (ModelWithoutSortkey.hashkey > "d") & (
+                ModelWithoutSortkey.another_attr > 20
             )
 
             items = list(table.scan(scan_filter=scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_ge(self):
@@ -460,15 +446,14 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (
-                (ModelWithoutSortkey.hashkey >= "h")
-                & (ModelWithoutSortkey.another_attr >= 20.1)
+            scan_filter = (ModelWithoutSortkey.hashkey >= "h") & (
+                ModelWithoutSortkey.another_attr >= 20.1
             )
 
             items = list(table.scan(scan_filter=scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_lt(self):
@@ -490,15 +475,14 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (
-                (ModelWithoutSortkey.hashkey < "c")
-                & (ModelWithoutSortkey.another_attr < 2.5)
+            scan_filter = (ModelWithoutSortkey.hashkey < "c") & (
+                ModelWithoutSortkey.another_attr < 2.5
             )
 
             items = list(table.scan(scan_filter=scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_le(self):
@@ -520,15 +504,14 @@ class TestDynamoDB(unittest.TestCase):
             table.put_item(miss_key)
             table.put_item(miss_attr)
 
-            scan_filter = (
-                (ModelWithoutSortkey.hashkey <= "azzzzzzz")
-                & (ModelWithoutSortkey.another_attr <= 2)
+            scan_filter = (ModelWithoutSortkey.hashkey <= "azzzzzzz") & (
+                ModelWithoutSortkey.another_attr <= 2
             )
 
             items = list(table.scan(scan_filter=scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_attribute_type(self):
@@ -549,7 +532,7 @@ class TestDynamoDB(unittest.TestCase):
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_contains(self):
@@ -599,7 +582,7 @@ class TestDynamoDB(unittest.TestCase):
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_in(self):
@@ -620,7 +603,7 @@ class TestDynamoDB(unittest.TestCase):
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_ne(self):
@@ -641,7 +624,7 @@ class TestDynamoDB(unittest.TestCase):
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_not_exists(self):
@@ -661,7 +644,7 @@ class TestDynamoDB(unittest.TestCase):
 
             items = list(table.scan(scan_filter=attr_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
             self.assertTrue(item.another_attr is NOT_SET)
