@@ -1,67 +1,126 @@
 import unittest
 from contextlib import ExitStack
 
-import awstin.dynamodb.api as ddb_api
-from awstin.dynamodb import DynamoDB
+import awstin.dynamodb.table as ddb_table
+from awstin.dynamodb import Attr, DynamoDB, DynamoModel, Key
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
+class ModelWithoutSortkey(DynamoModel):
+    _table_name_ = "test_without_sort"
+
+    hashkey = Key()
+
+    another_attr = Attr()
+
+    def __eq__(self, other):
+        if isinstance(other, ModelWithoutSortkey):
+            return (
+                self.hashkey == other.hashkey
+                and self.another_attr == other.another_attr
+            )
+        return NotImplemented
+
+
+class ModelWithSortkey(DynamoModel):
+    _table_name_ = "test_with_sort"
+
+    hashkey = Key()
+
+    sortkey = Key()
+
+    another_attr = Attr()
+
+    def __eq__(self, other):
+        if isinstance(other, ModelWithSortkey):
+            return (
+                self.hashkey == other.hashkey
+                and self.sortkey == other.sortkey
+                and self.another_attr == other.another_attr
+            )
+        return NotImplemented
+
+
 class TestDynamoDB(unittest.TestCase):
+    def setUp(self):
+        self.table_without_sortkey = temporary_dynamodb_table(
+            ModelWithoutSortkey,
+            "hashkey",
+        )
+
+        self.table_with_sortkey = temporary_dynamodb_table(
+            ModelWithSortkey,
+            "hashkey",
+            sortkey_name="sortkey",
+            sortkey_type="N"
+        )
+
     def test_dynamodb_table(self):
-        with temporary_dynamodb_table("table_name", "hashkey_name") as table:
-            test_item = {
-                "hashkey_name": "test_value",
-                "another_key": 5,
-            }
+        with self.table_without_sortkey as table:
+            test_item = ModelWithoutSortkey(
+                hashkey="test_value",
+                another_attr=5.5,
+            )
 
             # Table can be used
             table.put_item(test_item)
             result_item = table["test_value"]
+            self.assertIsInstance(result_item, ModelWithoutSortkey)
             self.assertEqual(result_item, test_item)
 
             # DynamoDB can access table
             dynamodb = DynamoDB()
-            self.assertEqual(dynamodb["table_name"]["test_value"], test_item)
+            ddb_result = dynamodb[ModelWithoutSortkey]["test_value"]
+            self.assertIsInstance(ddb_result, ModelWithoutSortkey)
+            self.assertEqual(ddb_result, test_item)
 
     def test_dynamodb_table_access_by_shorthand_composite_key(self):
-        temp_table = temporary_dynamodb_table(
-            "tabname",
-            "hashname",
-            sortkey_name="sortname",
-            sortkey_type="N",
-        )
-        with temp_table as table:
-            test_item = {"hashname": "aaa", "sortname": 555, "aa": "bb"}
+        with self.table_with_sortkey as table:
+            test_item = ModelWithSortkey(
+                hashkey="aaa",
+                sortkey=555,
+                another_attr="bb",
+            )
             table.put_item(test_item)
 
             self.assertEqual(table[("aaa", 555)], test_item)
 
     def test_dynamodb_table_access_by_full_hash_key(self):
-        with temporary_dynamodb_table("tabname", "hashname") as table:
-            test_item = {"hashname": "123", "nothashname": "456"}
+        with self.table_without_sortkey as table:
+            test_item = ModelWithoutSortkey(
+                hashkey="abcd",
+                another_attr=777,
+            )
             table.put_item(test_item)
 
-            self.assertEqual(table[{"hashname": "123"}], test_item)
+            self.assertEqual(table[{"hashkey": "abcd"}], test_item)
 
     def test_dynamodb_table_access_by_full_composite_key(self):
-        temp_table = temporary_dynamodb_table(
-            "tabname",
-            "hashname",
-            sortkey_name="sortname",
-            sortkey_type="N",
-        )
-        with temp_table as table:
-            test_item = {"hashname": "aaa", "sortname": 555, "aa": "bb"}
+        with self.table_with_sortkey as table:
+            test_item = ModelWithSortkey(
+                hashkey="aaa",
+                sortkey=555,
+                another_attr="bb",
+            )
             table.put_item(test_item)
 
             self.assertEqual(
-                table[{"hashname": "aaa", "sortname": 555}],
+                table[{"hashkey": "aaa", "sortkey": 555}],
                 test_item
             )
 
+    def test_dynamodb_get_item_with_unset_attribute(self):
+        self.fail("Todo")
+
+    def test_dynamodb_get_item_attribute_not_in_model(self):
+        self.fail("Todo")
+
     def test_dynamodb_table_delete_item(self):
-        with temporary_dynamodb_table("tabname", "hashname") as table:
-            test_item = {"hashname": "123", "nothashname": "456"}
+        with self.table_without_sortkey as table:
+            test_item = ModelWithoutSortkey(
+                hashkey="123",
+                another_attr="bb",
+            )
             table.put_item(test_item)
 
             self.assertEqual(table["123"], test_item)
@@ -72,35 +131,50 @@ class TestDynamoDB(unittest.TestCase):
                 table["123"]
 
     def test_dynamodb_list_tables(self):
-        with temporary_dynamodb_table("test_tab1", "test_key1"):
-            with temporary_dynamodb_table("test_tab2", "test_key2"):
+        with self.table_with_sortkey:
+            with self.table_without_sortkey:
                 tables = DynamoDB().list_tables()
 
-        self.assertEqual(tables, ["test_tab1", "test_tab2"])
+        self.assertEqual(tables, ["test_with_sort", "test_without_sort"])
 
     def test_dynamodb_list_tables_long(self):
         # Reduce page size so test doesn't have to make over 100 tables
-        ddb_api._PAGE_SIZE = 5
+        ddb_table._PAGE_SIZE = 5
 
         dynamodb = DynamoDB()
 
-        table_managers = [
-            temporary_dynamodb_table("abc"+str(i), "def"+str(i))
-            for i in range(11)
-        ]
         with ExitStack() as stack:
-            for table in table_managers:
-                stack.enter_context(table)
+            for i in range(11):
+                class Cls(DynamoModel):
+                    _table_name_ = "abc"+str(i)
+                table_ctx = temporary_dynamodb_table(Cls, "def"+str(i))
+                stack.enter_context(table_ctx)
 
             self.assertEqual(len(dynamodb.list_tables()), 11)
 
     def test_dynamodb_table_items_generator(self):
+        class BigItem(DynamoModel):
+            _table_name_ = "test_tab"
+            pkey = Key()
+            bigstring = Attr()
+
+            def __eq__(self, other):
+                if isinstance(other, BigItem):
+                    return (
+                        self.pkey == other.pkey
+                        and self.bigstring == other.bigstring
+                    )
+                return NotImplemented
+
         # Page size of DynamoDB item returns is 1MB. Add ~2.2MB of items
         add_items = [
-            {"pkey": "item "+str(i), "bigstring": "a" * 100000}
+            BigItem(
+                pkey="item "+str(i),
+                bigstring="a" * 100000
+            )
             for i in range(22)
         ]
-        with temporary_dynamodb_table("test_tab", "pkey") as table:
+        with temporary_dynamodb_table(BigItem, "pkey") as table:
             for item in add_items:
                 table.put_item(item)
 
@@ -108,3 +182,6 @@ class TestDynamoDB(unittest.TestCase):
 
         self.assertEqual(len(result_items), 22)
         self.assertCountEqual(result_items, add_items)
+
+    def test_dynamodb_table_scan_filter(self):
+        self.fail("Todo")

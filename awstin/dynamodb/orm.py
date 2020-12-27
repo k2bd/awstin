@@ -1,7 +1,8 @@
-from decimal import Decimal
 from typing import Union
 
 from boto3.dynamodb.conditions import Attr as BotoAttr, Key as BotoKey
+
+from awstin.dynamodb.utils import from_decimal, to_decimal
 
 
 class NotSet:
@@ -26,11 +27,6 @@ class BaseAttribute:
         # Set by Model
         self._name_on_model = None
 
-    def _convert_value(self, value):
-        if isinstance(value, float):
-            return Decimal(str(value))
-        return value
-
     @property
     def name(self):
         if self._attribute_name is not None:
@@ -48,28 +44,28 @@ class Key(BaseAttribute):
     _query_type = BotoKey
 
     def begins_with(self, value):
-        return self._query_type(self.name).begins_with(self._convert_value(value))
+        return self._query_type(self.name).begins_with(to_decimal(value))
 
     def between(self, low, high):
         return self._query_type(self.name).between(
-            self._convert_value(low),
-            self._convert_value(high),
+            to_decimal(low),
+            to_decimal(high),
         )
 
     def __eq__(self, value):
-        return self._query_type(self.name).eq(self._convert_value(value))
+        return self._query_type(self.name).eq(to_decimal(value))
 
     def __gt__(self, value):
-        return self._query_type(self.name).gt(self._convert_value(value))
+        return self._query_type(self.name).gt(to_decimal(value))
 
     def __ge__(self, value):
-        return self._query_type(self.name).gte(self._convert_value(value))
+        return self._query_type(self.name).gte(to_decimal(value))
 
     def __lt__(self, value):
-        return self._query_type(self.name).lt(self._convert_value(value))
+        return self._query_type(self.name).lt(to_decimal(value))
 
     def __le__(self, value):
-        return self._query_type(self.name).lte(self._convert_value(value))
+        return self._query_type(self.name).lte(to_decimal(value))
 
 
 class Attr(Key):
@@ -81,20 +77,20 @@ class Attr(Key):
 
     def attribute_type(self, value):
         return self._query_type(self.name).attribute_type(
-            self._convert_value(value)
+            to_decimal(value)
         )
 
     def contains(self, value):
-        return self._query_type(self.name).contains(self._convert_value(value))
+        return self._query_type(self.name).contains(to_decimal(value))
 
     def exists(self):
         return self._query_type(self.name).exists()
 
     def in_(self, value):
-        return self._query_type(self.name).is_in(self._convert_value(value))
+        return self._query_type(self.name).is_in(to_decimal(value))
 
     def __ne__(self, value):
-        return self._query_type(self.name).ne(self._convert_value(value))
+        return self._query_type(self.name).ne(to_decimal(value))
 
     def not_exists(self):
         return self._query_type(self.name).not_exists()
@@ -159,10 +155,7 @@ class DynamoModel(metaclass=DynamoModelMeta):
 
         for db_attr, value in data.items():
             if db_attr in model_attrs.keys():
-                if isinstance(value, Decimal):
-                    value = float(value)
-                    if int(value) == value:
-                        value = int(value)
+                value = from_decimal(value)
                 setattr(result, model_attrs[db_attr], value)
 
         return result
@@ -175,8 +168,7 @@ class DynamoModel(metaclass=DynamoModelMeta):
         for dynamo_name, model_name in model_attrs.items():
             value = getattr(self, model_name)
             if value is not NOT_SET:
-                if isinstance(value, float):
-                    value = Decimal(str(value))
+                value = to_decimal(value)
                 result[dynamo_name] = value
 
         return result

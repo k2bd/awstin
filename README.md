@@ -11,8 +11,33 @@ High-level utilities for building and testing AWS applications in Python.
 
 ### Production
 
-The `DynamoDB` class currently gives dict-like access to boto3 `Table`s and their contents.
-This requires either the `TEST_DYNAMODB_ENDPOINT` (for integration testing) or `AWS_REGION` (for production) environment variable to be set.
+To use DynamoDB either the `TEST_DYNAMODB_ENDPOINT` (for integration
+testing) or `AWS_REGION` (for production) environment variable must be set.
+
+DynamoDB is accessed through Python data models that users define to represent
+structured data in tables.
+
+```python
+from awstin.dynamodb import Attr, DynamoModel, Key
+
+
+class User(DynamoModel):
+    # Name of the DynamoDB table (required!)
+    _table_name_ = "Users"
+
+    # Sort or hash keys are marked with Key
+    user_id = Key()
+
+    # Other attributes are marked with Attr
+    favorite_color = Attr()
+
+    # The names of attributes and keys can differ from the names on the data
+    # model - the name of the attribute in DynamoDB should be passed to Attr
+    account_age = Attr("ageDays")
+```
+
+Tables are tied to these data models. They'll be returned when items are 
+retrieved from the table. Also, `put_item` takes instances of this data model class.
 
 ```python
 from awstin.dynamodb import DynamoDB
@@ -23,22 +48,43 @@ dynamodb = DynamoDB()
 # List of available tables
 tables = dynamodb.list_tables()
 
-# Access a table by name
-table1 = dynamodb["my_table"]
+# Access a table by model
+users_table = dynamodb[User]
+
+# Put an item into the table
+user = User(
+    user_id="user123",
+    favorite_color="Blue",
+    account_age=120,
+)
 
 # Tables that only have a partition key can be accessed directly by their
 # partition key
-item1 = table1["an_item"]
+item1 = users_table["user123"]
 
 # Tables that have partition and sort keys can be accessed by a tuple
-table2 = dynamodb["another_table"]
+table2 = dynamodb[AnotherTableModel]
 item2 = table2[("hashval", 123)]
 
 # Full primary key access is also available
 item3 = table2[{"hashkey_name": "hashval", "sortkey_name": 123}]
 ```
 
-Tables can be scanned without worrying about pagination. `Table.scan` yields items, requesting another page of items lazily only when it's out of items in a page.
+Query and scan filters can be built up using these data models as well. Results can be iterated without worrying about pagination. `Table.scan` and `Table.query` yield items, requesting another page of items lazily only when it's out of items in a page.
+
+```python
+scan_filter = (
+    (User.account_age > 30)
+    & (User.favorite_color.in_(["Blue", "Green"]))
+)
+
+for user in users_table.scan(scan_filter):
+    ban_user(user)
+```
+
+**Float and Decimal**
+
+`awstin` does its best to convert between `float` and `Decimal` so the user doesn't need to worry about it. 
 
 
 ### Testing
@@ -51,7 +97,7 @@ Hashkey and sortkey info can be provided.
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
-with temporary_dynamodb_table("table_name", "hashkey_name") as table:
+with temporary_dynamodb_table(User, "hashkey_name") as table:
     item = {
         "hashkey_name": "test_value",
         "another_key": 5,
