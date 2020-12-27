@@ -44,9 +44,27 @@ class Key(BaseAttribute):
     _query_type = BotoKey
 
     def begins_with(self, value):
+        """
+        Filter results by a key or attribute beginning with a value
+
+        Parameters
+        ----------
+        value : str
+            Starting string for returned results
+        """
         return self._query_type(self.name).begins_with(to_decimal(value))
 
     def between(self, low, high):
+        """
+        Filter results by range (inclusive)
+
+        Parameters
+        ----------
+        low : Any
+            Low end of the range
+        high : Any
+            High end of the range
+        """
         return self._query_type(self.name).between(
             to_decimal(low),
             to_decimal(high),
@@ -76,23 +94,57 @@ class Attr(Key):
     _query_type = BotoAttr
 
     def attribute_type(self, value):
+        """
+        Filter results by attribute type
+
+        Parameters
+        ----------
+        value : str
+            Index for a DynamoDB attribute type (e.g. "N" for Number)
+        """
         return self._query_type(self.name).attribute_type(
             to_decimal(value)
         )
 
     def contains(self, value):
+        """
+        Filter results by attributes that are containers and contain the target
+        value
+
+        Parameters
+        ----------
+        values : Any
+            Result must contain this item
+        """
         return self._query_type(self.name).contains(to_decimal(value))
 
     def exists(self):
+        """
+        Filter results by existence of an attribute
+        """
         return self._query_type(self.name).exists()
 
-    def in_(self, value):
-        return self._query_type(self.name).is_in(to_decimal(value))
+    def in_(self, values):
+        """
+        Filter results by existence in a set
+
+        Parameters
+        ----------
+        values : list of Any
+            Allowed values of returned results
+        """
+        in_vals = [
+            to_decimal(value) for value in values
+        ]
+        return self._query_type(self.name).is_in(in_vals)
 
     def __ne__(self, value):
         return self._query_type(self.name).ne(to_decimal(value))
 
     def not_exists(self):
+        """
+        Filter results by non-existence of an attribute
+        """
         return self._query_type(self.name).not_exists()
 
 
@@ -155,7 +207,15 @@ class DynamoModel(metaclass=DynamoModelMeta):
 
         for db_attr, value in data.items():
             if db_attr in model_attrs.keys():
-                value = from_decimal(value)
+                if type(value) in [list, set, tuple]:
+                    value = type(value)(from_decimal(v) for v in value)
+                elif type(value) is dict:
+                    value = {
+                        from_decimal(k): from_decimal(v)
+                        for k, v in value.items()
+                    }
+                else:
+                    value = from_decimal(value)
                 setattr(result, model_attrs[db_attr], value)
 
         return result
@@ -168,7 +228,15 @@ class DynamoModel(metaclass=DynamoModelMeta):
         for dynamo_name, model_name in model_attrs.items():
             value = getattr(self, model_name)
             if value is not NOT_SET:
-                value = to_decimal(value)
+                if type(value) in [list, set, tuple]:
+                    value = type(value)(to_decimal(v) for v in value)
+                elif type(value) is dict:
+                    value = {
+                        to_decimal(k): to_decimal(v)
+                        for k, v in value.items()
+                    }
+                else:
+                    value = to_decimal(value)
                 result[dynamo_name] = value
 
         return result
