@@ -118,7 +118,7 @@ Indexes work identically, but must have a `_index_name_` attribute on the data
 model. Indexes can be used for queries and scans.
 
 ```python
-class StudentIndex(DynamoModel):
+class ByHomeroomIndex(DynamoModel):
     _table_name_ = "Students"
     _index_name_ = "ByHomeroom"
 
@@ -130,6 +130,8 @@ class StudentIndex(DynamoModel):
 
     year = Attr()
 
+
+homeroom_index = dynamodb[ByHomeroomIndex]
 
 query_filter = (
     (ByHomeroomIndex.homeroom == "Doe")
