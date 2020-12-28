@@ -176,7 +176,7 @@ class TestDynamoDB(unittest.TestCase):
 
             self.assertEqual(len(dynamodb.list_tables()), 11)
 
-    def test_dynamodb_table_items_generator(self):
+    def test_dynamodb_table_scan_items_generator(self):
         class BigItem(DynamoModel):
             _table_name_ = "test_tab"
             pkey = Key()
@@ -196,6 +196,32 @@ class TestDynamoDB(unittest.TestCase):
                 table.put_item(item)
 
             result_items = list(table.scan())
+
+        self.assertEqual(len(result_items), 22)
+        self.assertCountEqual(result_items, add_items)
+
+    def test_dynamodb_table_query_items_generator(self):
+        class BigItem(DynamoModel):
+            _table_name_ = "test_tab"
+            pkey = Key()
+            sortkey = Key()
+            bigstring = Attr()
+
+            def __eq__(self, other):
+                if isinstance(other, BigItem):
+                    return self.pkey == other.pkey and self.bigstring == other.bigstring
+                return NotImplemented
+
+        # Page size of DynamoDB item returns is 1MB. Add ~2.2MB of items
+        add_items = [
+            BigItem(pkey="a", sortkey="item " + str(i), bigstring="a" * 100000)
+            for i in range(22)
+        ]
+        with temporary_dynamodb_table(BigItem, "pkey", sortkey_name="sortkey") as table:
+            for item in add_items:
+                table.put_item(item)
+
+            result_items = list(table.query(BigItem.pkey == "a"))
 
         self.assertEqual(len(result_items), 22)
         self.assertCountEqual(result_items, add_items)
@@ -935,15 +961,6 @@ class TestDynamoDB(unittest.TestCase):
 
             homeroom = Attr()
 
-            def __eq__(self, other):
-                if isinstance(other, Student):
-                    return (
-                        (self.name == other.name)
-                        & (self.year == other.year)
-                        & (self.homeroom == other.homeroom)
-                    )
-                return NotImplemented
-
         class ByHomeroomIndex(DynamoModel):
             _table_name_ = "Students"
             _index_name_ = "ByHomeroom"
@@ -1018,6 +1035,5 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(len(items), 1)
             (item,) = items
 
-            self.assertIsInstance(item, ByHomeroomIndex)
             expected = ByHomeroomIndex(name="Cloud", year=12, homeroom="Faba")
             self.assertEqual(item, expected)

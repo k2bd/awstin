@@ -233,5 +233,3 @@ class Table:
             )
             items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
             yield from items
-
-    # TODO: Batch Update
