@@ -13,6 +13,8 @@ def temporary_dynamodb_table(
     sortkey_type="S",
     delay=5.0,
     max_attempts=10,
+    extra_attributes=None,
+    **extra_kwargs,
 ):
     """
     Context manager creating a temporary DynamoDB table for testing.
@@ -34,6 +36,10 @@ def temporary_dynamodb_table(
     max_attempts : int, optional
         Max number of attempts to check if the table exists, after which the
         client gives up.
+    extra_attributes : dict, optional
+        Additional attribute definitions to add to create_table
+    **extra_kwargs : dict
+        Additional keyword arguments will be passed to create_table
     """
     # TODO: make filter more specific
     warnings.simplefilter("ignore", ResourceWarning)
@@ -68,11 +74,15 @@ def temporary_dynamodb_table(
             },
         )
 
+    if extra_attributes:
+        attribute_definitions.extend(extra_attributes)
+
     dynamodb.client.create_table(
         TableName=table_name,
         AttributeDefinitions=attribute_definitions,
         KeySchema=key_schema,
         ProvisionedThroughput={"ReadCapacityUnits": 123, "WriteCapacityUnits": 123},
+        **extra_kwargs,
     )
 
     exists_waiter = dynamodb.client.get_waiter("table_exists")
