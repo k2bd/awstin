@@ -147,7 +147,10 @@ class Table:
         value of the partition key if there is no sort key
         """
         primary_key = self._get_primary_key(key)
-        item = self._boto3_table.get_item(Key=primary_key)["Item"]
+        item = self._boto3_table.get_item(
+            Key=primary_key,
+            **self.data_model._dynamo_projection(),
+        )["Item"]
         return self.data_model._from_dynamodb(item)
 
     def put_item(self, item):
@@ -192,7 +195,10 @@ class Table:
         if scan_filter is not None:
             filter_kwargs["FilterExpression"] = scan_filter
 
-        results = self._boto3_table.scan(**filter_kwargs)
+        results = self._boto3_table.scan(
+            **filter_kwargs,
+            **self.data_model._get_kwargs(),
+        )
         items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
         yield from items
 
@@ -200,6 +206,7 @@ class Table:
             results = self._boto3_table.scan(
                 ExclusiveStartKey=results["LastEvaluatedKey"],
                 **filter_kwargs,
+                **self.data_model._get_kwargs(),
             )
             items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
             yield from items
@@ -211,7 +218,10 @@ class Table:
         if filter_expression is not None:
             query_kwargs["FilterExpression"] = filter_expression
 
-        results = self._boto3_table.query(**query_kwargs)
+        results = self._boto3_table.query(
+            **query_kwargs,
+            **self.data_model._get_kwargs(),
+        )
         items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
         yield from items
 
@@ -219,6 +229,7 @@ class Table:
             results = self._boto3_table.query(
                 ExclusiveStartKey=results["LastEvaluatedKey"],
                 **query_kwargs,
+                **self.data_model._get_kwargs(),
             )
             items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
             yield from items

@@ -11,17 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TEST_DYNAMODB_ENDPOINT: http://localhost:8000
-      TEST_SNS_ENDPOINT: http://localhost:9911
       AWS_DEFAULT_REGION: fake-region
       AWS_ACCESS_KEY_ID: fake-key
       AWS_SECRET_ACCESS_KEY: fake-secret-key
 
     steps:
     - uses: actions/checkout@v2
+    - name: Source environment
+      run: |
+        source docker/env.sh
     - name: Set up containers with docker-compose
       run: |
-        docker-compose -f scripts/docker-compose.yml up -d
+        docker-compose -f docker/docker-compose.yml up -d
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:

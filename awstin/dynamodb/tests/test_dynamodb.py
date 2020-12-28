@@ -922,3 +922,99 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(len(results), 1)
             (result,) = results
             self.assertEqual(result, item3)
+
+    def test_dynamodb_indexes(self):
+        class Student(DynamoModel):
+            _table_name_ = "Students"
+
+            # Hash key
+            name = Key()
+
+            # Sort key
+            year = Key()
+
+            homeroom = Attr()
+
+            def __eq__(self, other):
+                if isinstance(other, Student):
+                    return (
+                        (self.name == other.name)
+                        & (self.year == other.year)
+                        & (self.homeroom == other.homeroom)
+                    )
+                return NotImplemented
+
+        class ByHomeroomIndex(DynamoModel):
+            _table_name_ = "Students"
+            _index_name_ = "ByHomeroom"
+
+            homeroom = Key()
+
+            name = Key()
+
+            year = Attr()
+
+            def __eq__(self, other):
+                if isinstance(other, ByHomeroomIndex):
+                    return (self.name == other.name) & (self.homeroom == other.homeroom) & (self.year == other.year)
+                return NotImplemented
+
+        with temporary_dynamodb_table(
+            Student,
+            "name",
+            hashkey_type="S",
+            sortkey_name="year",
+            sortkey_type="N",
+            extra_attributes=[
+                {
+                    'AttributeName': 'homeroom',
+                    'AttributeType': 'S',
+                },
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    "IndexName": "ByHomeroom",
+                    "KeySchema": [
+                        {
+                            "AttributeName": "homeroom",
+                            "KeyType": "HASH",
+                        },
+                        {
+                            "AttributeName": "name",
+                            "KeyType": "RANGE",
+                        },
+                    ],
+                    "Projection": {
+                        "ProjectionType": "ALL",
+                    },
+                    "ProvisionedThroughput": {
+                        "ReadCapacityUnits": 123,
+                        "WriteCapacityUnits": 123,
+                    },
+                }
+            ],
+        ) as students_table:
+            item1 = Student(name="Cecil", year=10, homeroom="Faba")
+            item2 = Student(name="Cecil", year=11, homeroom="Aaa")
+            item3 = Student(name="Cloud", year=12, homeroom="Faba")
+            item4 = Student(name="Aerith", year=12, homeroom="Faba")
+            students_table.put_item(item1)
+            students_table.put_item(item2)
+            students_table.put_item(item3)
+            students_table.put_item(item4)
+
+            homeroom_index = DynamoDB()[ByHomeroomIndex]
+
+            query_filter = (
+                (ByHomeroomIndex.homeroom == "Faba")
+                & (ByHomeroomIndex.name > "B")
+            )
+            scan_filter = ByHomeroomIndex.year > 11
+
+            items = list(homeroom_index.query(query_filter, scan_filter))
+            self.assertEqual(len(items), 1)
+            item, = items
+
+            self.assertIsInstance(item, ByHomeroomIndex)
+            expected = ByHomeroomIndex(name="Cloud", year=12, homeroom="Faba")
+            self.assertEqual(item, expected)

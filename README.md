@@ -41,6 +41,9 @@ class User(DynamoModel):
 Tables are tied to these data models. They'll be returned when items are 
 retrieved from the table. Also, `put_item` takes instances of this data model class.
 
+These data models also define projection expressions, so only those attributes
+are retrieved from `get_item`, `query`, and `scan` calls.
+
 ```python
 from awstin.dynamodb import DynamoDB
 
@@ -109,6 +112,32 @@ results = students_table.query(
     query_expression=query_expression,
     filter_expression=filter_expression,
 )
+```
+
+Indexes work identically, but must have a `_index_name_` attribute on the data
+model. Indexes can be used for queries and scans.
+
+```python
+class StudentIndex(DynamoModel):
+    _table_name_ = "Students"
+    _index_name_ = "ByHomeroom"
+
+    # Hash key
+    homeroom = Key()
+
+    # Sort key
+    name = Key()
+
+    year = Attr()
+
+
+query_filter = (
+    (ByHomeroomIndex.homeroom == "Doe")
+    & (ByHomeroomIndex.name > "B")
+)
+scan_filter = ByHomeroomIndex.year > 11
+
+items = list(homeroom_index.query(query_filter, scan_filter))
 ```
 
 **Float and Decimal**
