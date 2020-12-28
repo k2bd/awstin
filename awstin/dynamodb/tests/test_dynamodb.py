@@ -956,7 +956,11 @@ class TestDynamoDB(unittest.TestCase):
 
             def __eq__(self, other):
                 if isinstance(other, ByHomeroomIndex):
-                    return (self.name == other.name) & (self.homeroom == other.homeroom) & (self.year == other.year)
+                    return (
+                        (self.name == other.name)
+                        & (self.homeroom == other.homeroom)
+                        & (self.year == other.year)
+                    )
                 return NotImplemented
 
         with temporary_dynamodb_table(
@@ -967,8 +971,8 @@ class TestDynamoDB(unittest.TestCase):
             sortkey_type="N",
             extra_attributes=[
                 {
-                    'AttributeName': 'homeroom',
-                    'AttributeType': 'S',
+                    "AttributeName": "homeroom",
+                    "AttributeType": "S",
                 },
             ],
             GlobalSecondaryIndexes=[
@@ -1005,15 +1009,14 @@ class TestDynamoDB(unittest.TestCase):
 
             homeroom_index = DynamoDB()[ByHomeroomIndex]
 
-            query_filter = (
-                (ByHomeroomIndex.homeroom == "Faba")
-                & (ByHomeroomIndex.name > "B")
+            query_filter = (ByHomeroomIndex.homeroom == "Faba") & (
+                ByHomeroomIndex.name > "B"
             )
             scan_filter = ByHomeroomIndex.year > 11
 
             items = list(homeroom_index.query(query_filter, scan_filter))
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
 
             self.assertIsInstance(item, ByHomeroomIndex)
             expected = ByHomeroomIndex(name="Cloud", year=12, homeroom="Faba")
