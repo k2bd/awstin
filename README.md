@@ -9,6 +9,8 @@ High-level utilities for building and testing AWS applications in Python.
 
 ## DynamoDB
 
+[![DynamoDB](https://img.shields.io/github/milestones/progress/k2bd/awstin/1)](https://github.com/k2bd/awstin/milestone/1)
+
 ### Production
 
 To use DynamoDB either the `TEST_DYNAMODB_ENDPOINT` (for integration
@@ -38,6 +40,9 @@ class User(DynamoModel):
 
 Tables are tied to these data models. They'll be returned when items are 
 retrieved from the table. Also, `put_item` takes instances of this data model class.
+
+These data models also define projection expressions, so only those attributes
+are retrieved from `get_item`, `query`, and `scan` calls.
 
 ```python
 from awstin.dynamodb import DynamoDB
@@ -109,10 +114,43 @@ results = students_table.query(
 )
 ```
 
+Indexes work identically, but must have a `_index_name_` attribute on the data
+model. Indexes can be used for queries and scans.
+
+```python
+class ByHomeroomIndex(DynamoModel):
+    _table_name_ = "Students"
+    _index_name_ = "ByHomeroom"
+
+    # Hash key
+    homeroom = Key()
+
+    # Sort key
+    name = Key()
+
+    year = Attr()
+
+
+homeroom_index = dynamodb[ByHomeroomIndex]
+
+query_expression = (
+    (ByHomeroomIndex.homeroom == "Doe")
+    & (ByHomeroomIndex.name > "B")
+)
+filter_expression = ByHomeroomIndex.year > 11
+
+items = list(homeroom_index.query(query_expression, filter_expression))
+```
+
 **Float and Decimal**
 
 Floats should be used when working with DynamoDB through `awstin`. Conversions between float and Decimal is done internally.
 
+
+**Unset Values**
+
+Values in a data model class that are unset, either by user instantiation or by
+retrieval from DynamoDB, are given the value `awstin.dynamodb.NOT_SET`.
 
 ### Testing
 
@@ -132,10 +170,6 @@ with temporary_dynamodb_table(User, "hashkey_name") as table:
     )
     table.put_item(item)
 ```
-
-### Future Work
-
-See the [Milestone](https://github.com/k2bd/awstin/milestone/1) for more information on what's currently planned for DynamoDB support. Feel free to open an issue for anything that's missing.
 
 
 ## Lambdas
@@ -207,6 +241,8 @@ Websocket("endpoint_url", "dev").send("callback_url", "message")
 
 
 ## SNS
+
+[![SNS](https://img.shields.io/github/milestones/progress/k2bd/awstin/2)]((https://github.com/k2bd/awstin/milestone/2))
 
 ### Production
 

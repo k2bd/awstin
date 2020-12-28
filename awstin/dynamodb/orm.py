@@ -1,3 +1,4 @@
+import uuid
 from typing import Union
 
 from boto3.dynamodb.conditions import Attr as BotoAttr
@@ -163,6 +164,43 @@ class DynamoModelMeta(type):
         }
         return result
 
+    def _get_kwargs(self):
+        """
+        Kwargs that should be passed to query, scan, get_item
+        """
+        return {
+            **self._dynamo_projection(),
+            **self._index_kwargs(),
+        }
+
+    def _dynamo_projection(self):
+        """
+        Attributes to request when retrieving data from DynamoDB
+
+        Returns
+        -------
+        dict
+            kwargs to be passed to DynamoDB get attribute calls to employ
+            a projection expression and placeholders
+        """
+        placeholders = {
+            "#" + str(uuid.uuid4())[:8]: value
+            for value in self._dynamodb_attributes().keys()
+        }
+        expression = ", ".join(placeholders.keys())
+        return dict(
+            ProjectionExpression=expression,
+            ExpressionAttributeNames=placeholders,
+        )
+
+    def _index_kwargs(self):
+        if hasattr(self, "_index_name_"):
+            return dict(
+                IndexName=self._index_name_,
+            )
+        else:
+            return {}
+
 
 class DynamoModel(metaclass=DynamoModelMeta):
     """
@@ -171,6 +209,8 @@ class DynamoModel(metaclass=DynamoModelMeta):
     For example:
     ```python
     class MyDataModel(DynamoModel):
+        _table_name_ = "MyTable"
+
         hashkey_name = HashKey()
 
         # The name of the DynamoDB attribute differs from the
