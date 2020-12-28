@@ -14,6 +14,8 @@ jobs:
       AWS_DEFAULT_REGION: fake-region
       AWS_ACCESS_KEY_ID: fake-key
       AWS_SECRET_ACCESS_KEY: fake-secret-key
+      TEST_DYNAMODB_ENDPOINT: http://localhost:8000
+      TEST_SNS_ENDPOINT: http://localhost:9911
 
     steps:
     - uses: actions/checkout@v2
