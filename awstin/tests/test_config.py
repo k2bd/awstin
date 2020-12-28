@@ -33,16 +33,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(
             "Please set either the AWS_REGION environment variable or set a "
             "testing endpoint.",
-            str(err.exception)
+            str(err.exception),
         )
 
     def test_aws_config_kwargs(self):
         # Check that kwargs are passed to the resource properly
 
-        with mock.patch(CONFIG_NAME+".Config") as mock_config:
+        with mock.patch(CONFIG_NAME + ".Config") as mock_config:
             aws_config(timeout=11, max_retries=55, endpoint="123.456")
 
         mock_config.assert_called_once_with(
-            connect_timeout=11,
-            retries={"max_attempts": 55}
+            connect_timeout=11, retries={"max_attempts": 55}
         )

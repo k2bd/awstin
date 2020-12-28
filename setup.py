@@ -7,7 +7,7 @@ description = "Utilities for building and testing AWS applications in Python"
 
 setuptools.setup(
     name="awstin",
-    version="0.0.12",
+    version="0.0.14",
     author="Kevin Duff",
     description=description,
     long_description=long_description,
