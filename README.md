@@ -137,15 +137,20 @@ query_filter = (
     (ByHomeroomIndex.homeroom == "Doe")
     & (ByHomeroomIndex.name > "B")
 )
-scan_filter = ByHomeroomIndex.year > 11
+filter_expression = ByHomeroomIndex.year > 11
 
-items = list(homeroom_index.query(query_filter, scan_filter))
+items = list(homeroom_index.query(query_filter, filter_expression))
 ```
 
 **Float and Decimal**
 
 Floats should be used when working with DynamoDB through `awstin`. Conversions between float and Decimal is done internally.
 
+
+**Unset Values**
+
+Values in a data model class that are unset, either by user instantiation or by
+retrieval from DynamoDB, are given the value `awstin.dynamodb.NOT_SET`.
 
 ### Testing
 
