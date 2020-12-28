@@ -24,6 +24,8 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=[
         "boto3",
-        "responses",
     ],
+    package_data={
+        "awstin.sns": ["data/sns_testing_lambda.py"],
+    },
 )

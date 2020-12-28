@@ -10,3 +10,13 @@ services:
     container_name: sns-local
     ports:
       - "9911:9911"
+  s3-local:
+    image: minio/minio
+    container_name: s3-local
+    ports:
+      - "9000:9000"
+  lambda-local:
+    image: lambci/lambda
+    container_name: lambda-local
+    ports:
+      - "9001:9001"

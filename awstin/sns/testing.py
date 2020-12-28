@@ -1,13 +1,38 @@
 import contextlib
+import json
 import os
+import pkg_resources
+import tempfile
 import uuid
-import warnings
+import zipfile
 
 import boto3
-import responses
 
 from awstin.config import aws_config
-from awstin.constants import TEST_SNS_ENDPOINT
+from awstin.constants import TEST_LAMBDA_ENDPOINT, TEST_S3_ENDPOINT, TEST_SNS_ENDPOINT
+
+SNS_LAMBDA_FILE = pkg_resources.resource_filename(
+    "awstin.sns.testing",
+    "data/sns_testing_lambda.py"
+)
+
+
+class SnsMessages:
+    def __init__(self, filename):
+        self.filename = filename
+        self.messages = []
+
+    def __iter__(self):
+        if not os.path.exists(self.filename):
+            # If, perhaps, the file has been deleted
+            return self.messages
+        else:
+            with open(self.filename, "r", encoding="utf-8") as f:
+                raw_messages = f.readlines()
+            self.messages = [
+                json.loads(message) for message in raw_messages
+            ]
+        yield from self.messages
 
 
 @contextlib.contextmanager
@@ -25,37 +50,65 @@ def catch_sns_topic_messages(sns_topic):
 
     Yields
     ------
-    list
-        List of messages published on the topic wihin in the context manager.
+    SnsMessages
+        Iterable of messages published on the topic within in the context
+        manager.
     """
-    # TODO: make filter more specific
-    warnings.simplefilter("ignore", ResourceWarning)
+    s3_config = aws_config(
+        endpoint=os.environ.get(TEST_S3_ENDPOINT)
+    )
+    s3_client = boto3.client("s3", **s3_config)
+    bucket_name = str(uuid.uuid4())
+    s3_client.create_bucket(Bucket=bucket_name)
 
-    messages = []
+    lambda_config = aws_config(
+        endpoint=os.environ.get(TEST_LAMBDA_ENDPOINT)
+    )
+    lambda_client = boto3.client("lambda", **lambda_config)
 
-    def _add_message(request):
-        messages.append(request)
-        return (200, {}, "")
+    with tempfile.TemporaryDirectory() as directory:
+        messages_file = os.path.join(directory, "messages")
+        deployment_package = os.path.join(directory, "lambda.zip")
 
-    endpoint = "http://" + str(uuid.uuid4())
+        archive = zipfile.ZipFile(deployment_package, "w")
+        archive.write(SNS_LAMBDA_FILE)
 
-    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add_callback(
-            responses.POST,
-            endpoint,
-            callback=_add_message,
-            content_type='application/json',
+        s3_client.put_object(Body=archive, Bucket=bucket_name, Key='lambda.zip')
+
+        lambda_client.create_function(
+            Code={
+                'S3Bucket': bucket_name,
+                'S3Key': 'lambda.zip',
+            },
+            Description='Catch SNS topic messages.',
+            FunctionName=str(uuid.uuid4()),
+            Handler='sns_testing_lambda.handler',
+            Publish=True,
+            Role='arn:aws:iam::123456789012:role/lambda-role',
+            Runtime='python3.6',
         )
 
         subscription = sns_topic.topic.subscribe(
-            Protocol="http",
-            Endpoint=endpoint,
+            "TODO",
             ReturnSubscriptionArn=True,
         )
+
+        messages = SnsMessages(messages_file)
 
         try:
             yield messages
         finally:
+            # Ensure all messages have been collected by invoking the iterator
+            for _ in messages:
+                pass
+
+            # Delete bucket
+            bucket = s3_client.bucket(bucket_name)
+            for key in bucket.objects.all():
+                key.delete()
+            bucket.delete()
+
+            # Delete SNS subscription
             subscription.delete()
 
 

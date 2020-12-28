@@ -53,3 +53,9 @@ TEST_DYNAMODB_ENDPOINT = "TEST_DYNAMODB_ENDPOINT"
 
 #: SNS service endpoint for testing
 TEST_SNS_ENDPOINT = "TEST_SNS_ENDPOINT"
+
+#: S3 endpoint for testing
+TEST_S3_ENDPOINT = "TEST_S3_ENDPOINT"
+
+#: Lambda service endpoint for testing
+TEST_LAMBDA_ENDPOINT = "TEST_LAMBDA_ENDPOINT"
