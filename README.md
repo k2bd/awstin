@@ -133,13 +133,13 @@ class ByHomeroomIndex(DynamoModel):
 
 homeroom_index = dynamodb[ByHomeroomIndex]
 
-query_filter = (
+query_expression = (
     (ByHomeroomIndex.homeroom == "Doe")
     & (ByHomeroomIndex.name > "B")
 )
 filter_expression = ByHomeroomIndex.year > 11
 
-items = list(homeroom_index.query(query_filter, filter_expression))
+items = list(homeroom_index.query(query_expression, filter_expression))
 ```
 
 **Float and Decimal**
