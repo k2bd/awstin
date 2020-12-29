@@ -1066,6 +1066,40 @@ class TestDynamoDB(unittest.TestCase):
             item, = items
             self.assertEqual(item, hit)
 
+    def test_filter_deep_nested_json(self):
+        with self.table_without_sortkey as table:
+            hit = ModelWithoutSortkey(
+                hashkey="Aaa",
+                another_attr={
+                    "a": {
+                        "b": "c",
+                        "d": "e",
+                    },
+                    "c": "d",
+                },
+            )
+            miss = ModelWithoutSortkey(
+                hashkey="Bbb",
+                another_attr={
+                    "a": {
+                        "b": "e",
+                        "d": "c",
+                    },
+                    "c": "b",
+                },
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            scan_filter = ModelWithoutSortkey.another_attr.a.b == "c"
+
+            items = list(table.scan(scan_filter))
+
+            self.assertEqual(len(items), 1)
+            item, = items
+            self.assertEqual(item, hit)
+
     def test_filter_nested_list(self):
         with self.table_without_sortkey as table:
             hit = ModelWithoutSortkey(
