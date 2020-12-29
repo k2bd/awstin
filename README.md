@@ -144,7 +144,7 @@ items = list(homeroom_index.query(query_expression, filter_expression))
 
 **Nested Values**
 
-Filters on nested queries work as well:
+Filters on nested attributes work as well:
 
 ```python
 scan_filter = (
@@ -186,6 +186,8 @@ with temporary_dynamodb_table(User, "hashkey_name") as table:
 
 
 ## Lambdas
+
+[![Lambda](https://img.shields.io/github/milestones/progress/k2bd/awstin/3)]((https://github.com/k2bd/awstin/milestone/3))
 
 ### Production
 
