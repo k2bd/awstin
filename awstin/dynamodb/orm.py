@@ -150,6 +150,7 @@ class Key(BaseAttribute):
     Used to define and query hash and sort key attributes on a dynamodb table
     data model
     """
+
     _query_type = BotoKey
 
 
@@ -157,6 +158,7 @@ class Attr(BaseAttribute):
     """
     Used to define and query non-key attributes on a dynamodb table data model
     """
+
     _query_type = BotoAttr
 
 

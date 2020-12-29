@@ -1063,7 +1063,7 @@ class TestDynamoDB(unittest.TestCase):
             items = list(table.scan(scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_deep_nested_json(self):
@@ -1097,7 +1097,7 @@ class TestDynamoDB(unittest.TestCase):
             items = list(table.scan(scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
 
     def test_filter_nested_list(self):
@@ -1119,5 +1119,5 @@ class TestDynamoDB(unittest.TestCase):
             items = list(table.scan(scan_filter))
 
             self.assertEqual(len(items), 1)
-            item, = items
+            (item,) = items
             self.assertEqual(item, hit)
