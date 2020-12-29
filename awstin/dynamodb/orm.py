@@ -1,3 +1,5 @@
+from abc import abstractmethod, ABC
+from collections import defaultdict
 import uuid
 from typing import Union
 
@@ -51,6 +53,8 @@ class BaseAttribute:
         Support for nested container queries
         """
         return type(self)(attribute_name=f"{self.name}[{index}]")
+
+    # --- Query and scan filter expressions ---
 
     def begins_with(self, value):
         """
@@ -143,6 +147,26 @@ class BaseAttribute:
         Filter results by non-existence of an attribute
         """
         return BotoAttr(self.name).not_exists()
+
+    # --- Update expressions ---
+
+    def set(self, expression):
+        pass
+
+    def remove(self, expression):
+        pass
+
+    def add(self, expression):
+        pass
+
+    def delete(self):
+        pass
+
+    def __add__(self, other):
+        pass
+
+    def __sub__(self, other):
+        pass
 
 
 class Key(BaseAttribute):
@@ -288,3 +312,164 @@ class DynamoModel(metaclass=DynamoModelMeta):
                 result[dynamo_name] = value
 
         return result
+
+
+# ---- Update Operators
+
+class UpdateOperator(ABC):
+    """
+    TODO
+    """
+    def __and__(self, other):
+        """
+        Combine two update expressions
+        """
+        return Combine(self, other)
+
+    @abstractmethod
+    def update_dict(self):
+        """
+        Mapping of update expression section to list of values
+        """
+        pass
+
+    def update_expression(self):
+        pass
+
+    def serialize(self):
+        """
+        Produce kwargs to be passed to DynamoDB Table.update_item.
+
+        Keys and values are:
+            "UpdateExpression": string representing the update expression
+            "ExpressionAttributeNames": Placeholder map for attribute names
+            "ExpressionAttributeValues": Placeholder map for attribute values
+
+        Returns
+        -------
+        dict
+            Kwargs for update_item
+        """
+        return {
+            "UpdateExpression": self.update_expression(),
+            "ExpressionAttributeNames": self.expression_attribute_names(),
+            "ExpressionAttributeValues": self.expression_attribute_values(),
+        }
+
+
+class Combine(UpdateOperator):
+    """
+    Combine two update expressions
+    """
+    def __init__(self, left, right):
+        super().__init__()
+        self.left = left
+        self.right = right
+
+    def update_dict(self):
+        result = defaultdict(list)
+        items = (
+            list(self.left.update_dict().items())
+            + list(self.right.update_dict().items())
+        )
+        for key, values in items:
+            result[key].extend(values)
+
+        return result
+
+
+class Set(UpdateOperator):
+    """
+    Update expression for SET
+    """
+    def __init__(self, operand):
+        self.operand = operand
+
+    def update_dict(self):
+        return {
+            "SET": [self.operand.serialize()]
+        }
+
+
+class Remove(UpdateOperator):
+    """
+    Update expression for REMOVE
+    """
+    def __init__(self, operand):
+        self.operand = operand
+
+    def update_dict(self):
+        return {
+            "SET": [self.operand.serialize()]
+        }
+
+
+class Add(UpdateOperator):
+    """
+    Update expression for ADD
+    """
+    def __init__(self, operand):
+        self.operand = operand
+
+    def update_dict(self):
+        return {
+            "SET": [self.operand.serialize()]
+        }
+
+
+class Delete(UpdateOperator):
+    """
+    Update expression for DELETE
+    """
+    def __init__(self, operand):
+        self.operand = operand
+
+    def update_dict(self):
+        return {
+            "SET": [self.operand.serialize()]
+        }
+
+
+# ---- Update Operands
+
+class UpdateOperand:
+    """
+    Inner part of an update expression
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def serialize(self):
+        name = str(uuid.uuid4())[:8]
+        mapping = {name: str(self.value)}
+
+        if isinstance(self.value, UpdateOperand):
+            return self.value.serialize()
+        elif isinstance(self.value, BaseAttribute):
+            return {
+                "UpdateExpression": name,
+                "ExpressionAttributeNames": mapping,
+                "ExpressionAttributeValues": {},
+            }
+        else:
+            return {
+                "UpdateExpression": name,
+                "ExpressionAttributeNames": {},
+                "ExpressionAttributeValues": mapping,
+            }
+
+
+class Plus(UpdateOperand):
+    """
+    Add two expressions
+    """
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+
+class Minus(UpdateOperand):
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
