@@ -400,7 +400,7 @@ class Remove(UpdateOperator):
 
     def update_dict(self):
         return {
-            "SET": [self.operand.serialize()]
+            "REMOVE": [self.operand.serialize()]
         }
 
 
@@ -413,7 +413,7 @@ class Add(UpdateOperator):
 
     def update_dict(self):
         return {
-            "SET": [self.operand.serialize()]
+            "ADD": [self.operand.serialize()]
         }
 
 
@@ -426,7 +426,7 @@ class Delete(UpdateOperator):
 
     def update_dict(self):
         return {
-            "SET": [self.operand.serialize()]
+            "DELETE": [self.operand.serialize()]
         }
 
 
