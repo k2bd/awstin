@@ -37,14 +37,20 @@ class BaseAttribute:
         else:
             return self._name_on_model
 
+    def __getattr__(self, name):
+        """
+        Support for nested mapping queries
+        """
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return type(self)(attribute_name=f"{self.name}.{name}")
 
-class Key(BaseAttribute):
-    """
-    Used to define and query hash and sort key attributes on a dynamodb table
-    data model
-    """
-
-    _query_type = BotoKey
+    def __getitem__(self, index):
+        """
+        Support for nested container queries
+        """
+        return type(self)(attribute_name=f"{self.name}[{index}]")
 
     def begins_with(self, value):
         """
@@ -139,11 +145,18 @@ class Key(BaseAttribute):
         return BotoAttr(self.name).not_exists()
 
 
-class Attr(Key):
+class Key(BaseAttribute):
+    """
+    Used to define and query hash and sort key attributes on a dynamodb table
+    data model
+    """
+    _query_type = BotoKey
+
+
+class Attr(BaseAttribute):
     """
     Used to define and query non-key attributes on a dynamodb table data model
     """
-
     _query_type = BotoAttr
 
 

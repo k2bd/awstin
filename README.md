@@ -142,6 +142,19 @@ filter_expression = ByHomeroomIndex.year > 11
 items = list(homeroom_index.query(query_expression, filter_expression))
 ```
 
+**Nested Values**
+
+Filters on nested queries work as well:
+
+```python
+scan_filter = (
+    (MyModel.map_attr.key == "value")
+    & (MyModel.list_attr[3] == 10)
+)
+
+results = my_table.scan(scan_filter)
+```
+
 **Float and Decimal**
 
 Floats should be used when working with DynamoDB through `awstin`. Conversions between float and Decimal is done internally.
