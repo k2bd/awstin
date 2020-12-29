@@ -253,7 +253,7 @@ def my_handler(a: int, b: str):
 # ------
 
 def test_parser():
-    args = my_parser(test_event)
+    args = my_parser(test_event, test_context)
     assert ...
 
 def test_handler():
