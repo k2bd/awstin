@@ -241,6 +241,26 @@ def token_auth(token, resource_arn, principal_id):
         return auth.invalid()
 ```
 
+#### Testing
+
+A function wrapped with `lambda_handler` is stored on the `inner` attribute of the returned function. That way, the business logic of the handler can be tested separately without having to build events.
+
+```python
+@lambda_handler(my_parser)
+def my_handler(a: int, b: str):
+    ...
+
+# ------
+
+def test_parser():
+    args = my_parser(test_event)
+    assert ...
+
+def test_handler():
+    result = my_handler.inner(1, "abc")
+    assert ...
+```
+
 ### Websockets
 
 #### Production
