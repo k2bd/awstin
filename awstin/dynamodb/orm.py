@@ -325,9 +325,8 @@ class DynamoModel(metaclass=DynamoModelMeta):
 
 class UpdateOperator(ABC):
     """
-    TODO
+    A representation of an UpdateItem expression
     """
-
     def __and__(self, other):
         """
         Combine two update expressions
