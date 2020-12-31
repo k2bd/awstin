@@ -1,4 +1,6 @@
 import uuid
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import Union
 
 from boto3.dynamodb.conditions import Attr as BotoAttr
@@ -37,14 +39,22 @@ class BaseAttribute:
         else:
             return self._name_on_model
 
+    def __getattr__(self, name):
+        """
+        Support for nested mapping queries
+        """
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return type(self)(attribute_name=f"{self.name}.{name}")
 
-class Key(BaseAttribute):
-    """
-    Used to define and query hash and sort key attributes on a dynamodb table
-    data model
-    """
+    def __getitem__(self, index):
+        """
+        Support for nested container queries
+        """
+        return type(self)(attribute_name=f"{self.name}[{index}]")
 
-    _query_type = BotoKey
+    # --- Query and scan filter expressions ---
 
     def begins_with(self, value):
         """
@@ -138,8 +148,43 @@ class Key(BaseAttribute):
         """
         return BotoAttr(self.name).not_exists()
 
+    # --- Update expressions ---
 
-class Attr(Key):
+    def set(self, expression):
+        return SetOperator(self, UpdateOperand(expression))
+
+    def remove(self):
+        return RemoveOperator(self)
+
+    def add(self, expression):
+        return AddOperator(self, UpdateOperand(expression))
+
+    def delete(self, expression):
+        return DeleteOperator(self, UpdateOperand(expression))
+
+    def __add__(self, other):
+        return CombineOperand(UpdateOperand(self), UpdateOperand(other), "+")
+
+    def __sub__(self, other):
+        return CombineOperand(UpdateOperand(self), UpdateOperand(other), "-")
+
+    def __radd__(self, other):
+        return CombineOperand(UpdateOperand(other), UpdateOperand(self), "+")
+
+    def __rsub__(self, other):
+        return CombineOperand(UpdateOperand(other), UpdateOperand(self), "-")
+
+
+class Key(BaseAttribute):
+    """
+    Used to define and query hash and sort key attributes on a dynamodb table
+    data model
+    """
+
+    _query_type = BotoKey
+
+
+class Attr(BaseAttribute):
     """
     Used to define and query non-key attributes on a dynamodb table data model
     """
@@ -273,3 +318,250 @@ class DynamoModel(metaclass=DynamoModelMeta):
                 result[dynamo_name] = value
 
         return result
+
+
+# ---- Update Operators
+
+
+class UpdateOperator(ABC):
+    """
+    A representation of an UpdateItem expression
+    """
+    def __and__(self, other):
+        """
+        Combine two update expressions
+        """
+        return CombineOperator(self, other)
+
+    @abstractmethod
+    def update_dict(self):
+        pass
+
+    @staticmethod
+    def update_expression(update_dict):
+        expressions = []
+
+        for operation in "SET", "ADD", "DELETE", "REMOVE":
+            if update_dict.get(operation):
+                expressions.append(operation + " " + ", ".join(update_dict[operation]))
+
+        return " ".join(expressions)
+
+    def serialize(self):
+        """
+        Produce kwargs to be passed to DynamoDB Table.update_item.
+
+        Keys and values are:
+            "UpdateExpression": string representing the update expression
+            "ExpressionAttributeNames": Placeholder map for attribute names
+            "ExpressionAttributeValues": Placeholder map for attribute values
+
+        Returns
+        -------
+        dict
+            Kwargs for update_item
+        """
+        update_dict = self.update_dict()
+        result = {
+            "UpdateExpression": self.update_expression(update_dict),
+        }
+        if update_dict["ExpressionAttributeNames"]:
+            result["ExpressionAttributeNames"] = update_dict["ExpressionAttributeNames"]
+        if update_dict["ExpressionAttributeValues"]:
+            result["ExpressionAttributeValues"] = update_dict[
+                "ExpressionAttributeValues"
+            ]
+        return result
+
+
+class CombineOperator(UpdateOperator):
+    """
+    Combine two update expressions
+    """
+
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def update_dict(self):
+        result = defaultdict(list)
+        ser_left = self.left.update_dict()
+        ser_right = self.right.update_dict()
+
+        items = list(ser_left.items()) + list(ser_right.items())
+        for key, values in items:
+            if key in ["SET", "ADD", "DELETE", "REMOVE"]:
+                result[key].extend(values)
+
+        result["ExpressionAttributeNames"] = dict(
+            **ser_left["ExpressionAttributeNames"],
+            **ser_right["ExpressionAttributeNames"],
+        )
+        result["ExpressionAttributeValues"] = dict(
+            **ser_left["ExpressionAttributeValues"],
+            **ser_right["ExpressionAttributeValues"],
+        )
+
+        return result
+
+
+class SetOperator(UpdateOperator):
+    """
+    Support for SET
+    """
+
+    def __init__(self, attr, operand):
+        self.attr = attr
+        self.operand = operand
+
+    def update_dict(self):
+        attr_name = "#" + str(uuid.uuid4())[:8]
+
+        serialized = self.operand.serialize()
+
+        attribute_names = dict(**serialized["ExpressionAttributeNames"])
+        attribute_names[attr_name] = self.attr.name
+        return {
+            "SET": [f"{attr_name} = " + serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": attribute_names,
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
+        }
+
+
+class AddOperator(UpdateOperator):
+    def __init__(self, attr, operand):
+        self.attr = attr
+        self.operand = operand
+
+    def update_dict(self):
+        attr_name = "#" + str(uuid.uuid4())[:8]
+
+        serialized = self.operand.serialize()
+
+        attribute_names = dict(**serialized["ExpressionAttributeNames"])
+        attribute_names[attr_name] = self.attr.name
+        return {
+            "ADD": [f"{attr_name} " + serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": attribute_names,
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
+        }
+
+
+class RemoveOperator(UpdateOperator):
+    def __init__(self, attr):
+        self.attr = attr
+
+    def update_dict(self):
+        attr_name = "#" + str(uuid.uuid4())[:8]
+
+        return {
+            "REMOVE": [attr_name],
+            "ExpressionAttributeNames": {attr_name: self.attr.name},
+            "ExpressionAttributeValues": {},
+        }
+
+
+class DeleteOperator(UpdateOperator):
+    def __init__(self, attr, operand):
+        self.attr = attr
+        self.operand = operand
+
+    def update_dict(self):
+        attr_name = "#" + str(uuid.uuid4())[:8]
+
+        serialized = self.operand.serialize()
+
+        attribute_names = dict(**serialized["ExpressionAttributeNames"])
+        attribute_names[attr_name] = self.attr.name
+        return {
+            "DELETE": [f"{attr_name} " + serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": attribute_names,
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
+        }
+
+
+# ---- Update Operands
+
+
+def serialize_operand(value):
+    name = str(uuid.uuid4())[:8]
+
+    if isinstance(value, UpdateOperand):
+        return value.serialize()
+    elif isinstance(value, BaseAttribute):
+        name = "#" + name
+        return {
+            "UpdateExpression": name,
+            "ExpressionAttributeNames": {name: value.name},
+            "ExpressionAttributeValues": {},
+        }
+    elif type(value) in [list, set, tuple]:
+        name = ":" + name
+
+        value = set([to_decimal(v) for v in value])
+
+        return {
+            "UpdateExpression": name,
+            "ExpressionAttributeNames": {},
+            "ExpressionAttributeValues": {name: value},
+        }
+    else:
+        name = ":" + name
+        return {
+            "UpdateExpression": name,
+            "ExpressionAttributeNames": {},
+            "ExpressionAttributeValues": {name: to_decimal(value)},
+        }
+
+
+class UpdateOperand:
+    """
+    Inner part of an update expression
+    """
+
+    def __init__(self, value):
+        self.value = value
+
+    def serialize(self):
+        return serialize_operand(self.value)
+
+
+class CombineOperand(UpdateOperand):
+    """
+    Add or subtact two expressions
+    """
+
+    def __init__(self, left, right, symbol):
+        self.left = left
+        self.right = right
+        self.symbol = symbol
+
+    def serialize(self):
+        ser_left = serialize_operand(self.left)
+        ser_right = serialize_operand(self.right)
+
+        expression = (
+            f"{ser_left['UpdateExpression']} "
+            f"{self.symbol} "
+            f"{ser_right['UpdateExpression']}"
+        )
+
+        return {
+            "UpdateExpression": expression,
+            "ExpressionAttributeNames": dict(
+                **ser_left["ExpressionAttributeNames"],
+                **ser_right["ExpressionAttributeNames"],
+            ),
+            "ExpressionAttributeValues": dict(
+                **ser_left["ExpressionAttributeValues"],
+                **ser_right["ExpressionAttributeValues"],
+            ),
+        }
+
+
+class IfNotExistsOperand(UpdateOperand):
+    pass  # TODO
+
+
+class ListAppendOperand(UpdateOperand):
+    pass  # TODO

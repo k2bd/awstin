@@ -67,3 +67,17 @@ class TestEventDecorator(unittest.TestCase):
 
         result = handle_custom_event(EVENT, CONTEXT)
         self.assertEqual(result, "Result!")
+
+    def test_invoke_inner_function(self):
+        def custom_event_parser(event, context):
+            memory_limit = context["memory_limit_in_mb"]
+            return memory_limit
+
+        @lambda_handler(custom_event_parser)
+        def handle_custom_event(limit):
+            self.assertEqual(limit, 333)
+
+            return "Result!"
+
+        result = handle_custom_event.inner(333)
+        self.assertEqual(result, "Result!")

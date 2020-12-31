@@ -1037,3 +1037,87 @@ class TestDynamoDB(unittest.TestCase):
 
             expected = ByHomeroomIndex(name="Cloud", year=12, homeroom="Faba")
             self.assertEqual(item, expected)
+
+    def test_filter_nested_json(self):
+        with self.table_without_sortkey as table:
+            hit = ModelWithoutSortkey(
+                hashkey="Aaa",
+                another_attr={
+                    "a": "b",
+                    "c": "d",
+                },
+            )
+            miss = ModelWithoutSortkey(
+                hashkey="Bbb",
+                another_attr={
+                    "a": "d",
+                    "c": "b",
+                },
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            scan_filter = ModelWithoutSortkey.another_attr.a == "b"
+
+            items = list(table.scan(scan_filter))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_filter_deep_nested_json(self):
+        with self.table_without_sortkey as table:
+            hit = ModelWithoutSortkey(
+                hashkey="Aaa",
+                another_attr={
+                    "a": {
+                        "b": "c",
+                        "d": "e",
+                    },
+                    "c": "d",
+                },
+            )
+            miss = ModelWithoutSortkey(
+                hashkey="Bbb",
+                another_attr={
+                    "a": {
+                        "b": "e",
+                        "d": "c",
+                    },
+                    "c": "b",
+                },
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            scan_filter = ModelWithoutSortkey.another_attr.a.b == "c"
+
+            items = list(table.scan(scan_filter))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
+    def test_filter_nested_list(self):
+        with self.table_without_sortkey as table:
+            hit = ModelWithoutSortkey(
+                hashkey="Aaa",
+                another_attr=[1, 2, 3],
+            )
+            miss = ModelWithoutSortkey(
+                hashkey="Bbb",
+                another_attr=[4, 5, 6],
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            scan_filter = ModelWithoutSortkey.another_attr[1] == 2
+
+            items = list(table.scan(scan_filter))
+
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)

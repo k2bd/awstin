@@ -142,6 +142,42 @@ filter_expression = ByHomeroomIndex.year > 11
 items = list(homeroom_index.query(query_expression, filter_expression))
 ```
 
+**Nested Values**
+
+Filters on nested attributes work as well:
+
+```python
+scan_filter = (
+    (MyModel.map_attr.key == "value")
+    & (MyModel.list_attr[3] == 10)
+)
+
+results = my_table.scan(scan_filter)
+```
+
+**Updating Items**
+
+A syntax is also available for updating items, with an optional condition expression:
+
+```python
+update_expression = (
+    MyModel.an_attr.set(5 - MyModel.another_attr)
+    & MyModel.third_attr.add(100)
+    & MyModel.another_attr.remove()
+    & MyModel.set_attr.delete([2, 3])
+)
+
+condition_expression = MyModel.an_attr > 11
+
+updated = my_table.update_item(
+    "primary_key",
+    update_expression,
+    condition_expression,
+)
+```
+
+`update_item` returns `None` if the condition evaluates to `False`.
+
 **Float and Decimal**
 
 Floats should be used when working with DynamoDB through `awstin`. Conversions between float and Decimal is done internally.
@@ -173,6 +209,8 @@ with temporary_dynamodb_table(User, "hashkey_name") as table:
 
 
 ## Lambdas
+
+[![Lambda](https://img.shields.io/github/milestones/progress/k2bd/awstin/3)]((https://github.com/k2bd/awstin/milestone/3))
 
 ### Production
 
@@ -224,6 +262,26 @@ def token_auth(token, resource_arn, principal_id):
         return auth.unauthorized()
     else:
         return auth.invalid()
+```
+
+#### Testing
+
+A function wrapped with `lambda_handler` is stored on the `inner` attribute of the returned function. That way, the business logic of the handler can be tested separately without having to build events.
+
+```python
+@lambda_handler(my_parser)
+def my_handler(a: int, b: str):
+    ...
+
+# ------
+
+def test_parser():
+    args = my_parser(test_event, test_context)
+    assert ...
+
+def test_handler():
+    result = my_handler.inner(1, "abc")
+    assert ...
 ```
 
 ### Websockets

@@ -8,6 +8,9 @@ def lambda_handler(event_parser):
     Decorator factory for wrapping a lambda handler in a boilerplate event
     logger and parser.
 
+    The wrapped function is on the returned function's `inner` attribute in
+    order to be available for testing.
+
     Parameters
     ----------
     event_parser : callable
@@ -34,6 +37,8 @@ def lambda_handler(event_parser):
                 result = func(args)
             logger.info(f"Result: {result!r}")
             return result
+
+        wrapped.inner = func
 
         return wrapped
 

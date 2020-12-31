@@ -1,6 +1,7 @@
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
@@ -160,11 +161,41 @@ class Table:
         data = item._to_dynamodb()
         return self._boto3_table.put_item(Item=data)
 
-    def update_item(self, *args, **kwargs):
+    def update_item(self, key, update_expression, condition_expression=None):
         """
-        For now, direct exposure of update_item
+        Update an item in the table given an awstin update expression.
+
+        Can optionally have a condition expression.
+
+        Parameters
+        ---------
+        key : Any
+            Primary key, specified in any valid way
+        update_expression : awstin.dynamodb.orm.UpdateOperator
+            Update expression. See docs for construction.
+        condition_expression : Query, optional
+            Optional condition expression
+
+        Returns
+        -------
+        DynamoModel or None
+            Updated model, or None if the condition expression fails
         """
-        return self._boto3_table.update_item(*args, **kwargs)
+        boto_query = dict(
+            Key=self._get_primary_key(key),
+            ReturnValues="ALL_NEW",
+            **update_expression.serialize(),
+        )
+
+        if condition_expression:
+            boto_query["ConditionExpression"] = condition_expression
+
+        try:
+            result = self._boto3_table.update_item(**boto_query)
+        except ClientError:
+            return None
+
+        return self.data_model._from_dynamodb(result["Attributes"])
 
     def delete_item(self, key):
         """
