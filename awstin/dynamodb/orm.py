@@ -324,17 +324,22 @@ class UpdateOperator(ABC):
         """
         Combine two update expressions
         """
-        return Combine(self, other)
+        return CombineOperator(self, other)
 
     @abstractmethod
     def update_dict(self):
-        """
-        Mapping of update expression section to list of values
-        """
         pass
 
     def update_expression(self):
-        pass
+        update_dict = self.update_dict()
+
+        expressions = []
+
+        for operation in "SET", "ADD", "DELETE", "REMOVE":
+            if update_dict.get(operation):
+                expressions.append(operation + " " + ", ".join(update_dict[operation]))
+
+        return " ".join(expressions)
 
     def serialize(self):
         """
@@ -350,87 +355,132 @@ class UpdateOperator(ABC):
         dict
             Kwargs for update_item
         """
+        update_dict = self.update_dict()
         return {
             "UpdateExpression": self.update_expression(),
-            "ExpressionAttributeNames": self.expression_attribute_names(),
-            "ExpressionAttributeValues": self.expression_attribute_values(),
+            "ExpressionAttributeNames": update_dict["ExpressionAttributeNames"],
+            "ExpressionAttributeValues": update_dict["ExpressionAttributeValues"],
         }
 
 
-class Combine(UpdateOperator):
+class CombineOperator(UpdateOperator):
     """
     Combine two update expressions
     """
     def __init__(self, left, right):
-        super().__init__()
         self.left = left
         self.right = right
 
     def update_dict(self):
         result = defaultdict(list)
+        ser_left = self.left.update_dict()
+        ser_right = self.right.update_dict()
+        print(ser_left)
+        print(ser_right)
+
         items = (
-            list(self.left.update_dict().items())
-            + list(self.right.update_dict().items())
+            list(ser_left.items())
+            + list(ser_right.items())
         )
         for key, values in items:
-            result[key].extend(values)
+            if key in ["SET", "REMOVE", "UPDATE", "DELETE"]:
+                result[key].extend(values)
+
+        result["ExpressionAttributeNames"] = dict(
+            **ser_left["ExpressionAttributeNames"],
+            **ser_right["ExpressionAttributeNames"],
+        )
+        result["ExpressionAttributeValues"] = dict(
+            **ser_left["ExpressionAttributeValues"],
+            **ser_right["ExpressionAttributeValues"],
+        )
 
         return result
 
 
-class Set(UpdateOperator):
+class SetOperator(UpdateOperator):
     """
-    Update expression for SET
+    Support for SET
     """
-    def __init__(self, operand):
+    def __init__(self, attr, operand):
+        self.attr = attr
         self.operand = operand
 
     def update_dict(self):
+        attr_name = str(uuid.uuid4())[:8]
+
+        serialized = self.operand.serialize()
+
+        attribute_names = dict(**serialized["ExpressionAttributeNames"])
+        attribute_names[attr_name] = self.attr.name
         return {
-            "SET": [self.operand.serialize()]
+            "SET": [f"{attr_name} = " + serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": attribute_names,
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
         }
 
 
-class Remove(UpdateOperator):
-    """
-    Update expression for REMOVE
-    """
+class AddOperator(UpdateOperator):
     def __init__(self, operand):
         self.operand = operand
 
     def update_dict(self):
+        serialized = self.operand.serialize()
         return {
-            "REMOVE": [self.operand.serialize()]
+            "ADD": [serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": serialized["ExpressionAttributeNames"],
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
         }
 
 
-class Add(UpdateOperator):
-    """
-    Update expression for ADD
-    """
+class RemoveOperator(UpdateOperator):
     def __init__(self, operand):
         self.operand = operand
 
     def update_dict(self):
+        serialized = self.operand.serialize()
         return {
-            "ADD": [self.operand.serialize()]
+            "REMOVE": [serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": serialized["ExpressionAttributeNames"],
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
         }
 
 
-class Delete(UpdateOperator):
-    """
-    Update expression for DELETE
-    """
+class DeleteOperator(UpdateOperator):
     def __init__(self, operand):
         self.operand = operand
 
     def update_dict(self):
+        serialized = self.operand.serialize()
         return {
-            "DELETE": [self.operand.serialize()]
+            "DELETE": [serialized["UpdateExpression"]],
+            "ExpressionAttributeNames": serialized["ExpressionAttributeNames"],
+            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
         }
 
 
 # ---- Update Operands
+
+def serialize_operand(value):
+    name = str(uuid.uuid4())[:8]
+
+    if isinstance(value, UpdateOperand):
+        return value.serialize()
+    elif isinstance(value, BaseAttribute):
+        name = "#" + name
+        return {
+            "UpdateExpression": name,
+            "ExpressionAttributeNames": {name: value.name},
+            "ExpressionAttributeValues": {},
+        }
+    else:
+        name = ":" + name
+        return {
+            "UpdateExpression": name,
+            "ExpressionAttributeNames": {},
+            "ExpressionAttributeValues": {name: value},
+        }
+
 
 class UpdateOperand:
     """
@@ -440,36 +490,36 @@ class UpdateOperand:
         self.value = value
 
     def serialize(self):
-        name = str(uuid.uuid4())[:8]
-        mapping = {name: str(self.value)}
-
-        if isinstance(self.value, UpdateOperand):
-            return self.value.serialize()
-        elif isinstance(self.value, BaseAttribute):
-            return {
-                "UpdateExpression": name,
-                "ExpressionAttributeNames": mapping,
-                "ExpressionAttributeValues": {},
-            }
-        else:
-            return {
-                "UpdateExpression": name,
-                "ExpressionAttributeNames": {},
-                "ExpressionAttributeValues": mapping,
-            }
+        return serialize_operand(self.value)
 
 
-class Plus(UpdateOperand):
+class CombineOperand(UpdateOperand):
     """
-    Add two expressions
+    Add or subtact two expressions
     """
-    def __init__(self, left, right):
+    def __init__(self, left, right, symbol):
         self.left = left
         self.right = right
+        self.symbol = symbol
 
+    def serialize(self):
+        ser_left = serialize_operand(self.left)
+        ser_right = serialize_operand(self.right)
 
-class Minus(UpdateOperand):
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
+        expression = (
+            f"{ser_left['UpdateExpression']} "
+            f"{self.symbol} "
+            f"{ser_right['UpdateExpression']}"
+        )
 
+        return {
+            "UpdateExpression": expression,
+            "ExpressionAttributeNames": dict(
+                **ser_left["ExpressionAttributeNames"],
+                **ser_right["ExpressionAttributeNames"],
+            ),
+            "ExpressionAttributeValues": dict(
+                **ser_left["ExpressionAttributeValues"],
+                **ser_right["ExpressionAttributeValues"],
+            ),
+        }
