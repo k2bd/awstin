@@ -160,11 +160,23 @@ class Table:
         data = item._to_dynamodb()
         return self._boto3_table.put_item(Item=data)
 
-    def update_item(self, *args, **kwargs):
+    def update_item(self, key, update_expression, condition_expression=None):
         """
-        For now, direct exposure of update_item
+        Update an item in the table given an awstin update expression.
+
+        Can optionally have a condition expression.
         """
-        return self._boto3_table.update_item(*args, **kwargs)
+        boto_query = dict(
+            Key=self._get_primary_key(key),
+            ReturnValues="ALL_NEW",
+            **update_expression.serialize(),
+        )
+
+        if condition_expression:
+            boto_query["ConditionExpression"] = condition_expression
+
+        result = self._boto3_table.update_item(**boto_query)
+        return self.data_model._from_dynamodb(result)
 
     def delete_item(self, key):
         """
