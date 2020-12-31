@@ -155,6 +155,8 @@ scan_filter = (
 results = my_table.scan(scan_filter)
 ```
 
+**Updating Items**
+
 A syntax is also available for updating items, with an optional condition expression:
 
 ```python
