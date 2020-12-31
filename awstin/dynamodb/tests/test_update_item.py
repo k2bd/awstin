@@ -1,5 +1,6 @@
 import unittest
 
+from awstin.dynamodb.exceptions import UpdateConditionFalse
 from awstin.dynamodb.orm import (
     UpdateOperand,
     CombineOperand,
@@ -442,3 +443,47 @@ class TestUpdateItem(unittest.TestCase):
 
             got_item = table["aaa"]
             self.assertEqual(result, got_item)
+
+    def test_update_with_false_conditions(self):
+        update_expression = (
+            MyModel.an_attr.add(50)
+            & MyModel.another_attr.remove()
+        )
+        condition_expression = MyModel.an_attr > 11
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr=11,
+                another_attr=100,
+            )
+            table.put_item(item)
+
+            with self.assertRaises(UpdateConditionFalse):
+                table.update_item("bbb", update_expression, condition_expression)
+
+            # Item unchanged in the table
+            self.assertEqual(table["bbb"], item)
+
+    def test_update_with_conditions(self):
+        update_expression = (
+            MyModel.an_attr.add(50)
+            & MyModel.another_attr.remove()
+        )
+        condition_expression = MyModel.an_attr == 11
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr=11,
+                another_attr=100,
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression, condition_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr=61,
+            )
+            self.assertEqual(result, expected)

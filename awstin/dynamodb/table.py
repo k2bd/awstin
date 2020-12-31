@@ -1,9 +1,11 @@
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
+from awstin.dynamodb.exceptions import UpdateConditionFalse
 from awstin.dynamodb.utils import to_decimal
 
 # Testing parameter to change table listing page size
@@ -175,7 +177,13 @@ class Table:
         if condition_expression:
             boto_query["ConditionExpression"] = condition_expression
 
-        result = self._boto3_table.update_item(**boto_query)
+        try:
+            result = self._boto3_table.update_item(**boto_query)
+        except ClientError as e:
+            raise UpdateConditionFalse(
+                "Update condition evaluated to False."
+            ) from e
+
         return self.data_model._from_dynamodb(result["Attributes"])
 
     def delete_item(self, key):
