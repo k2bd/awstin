@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from collections import defaultdict
-import uuid
 from typing import Union
+import uuid
 
 from boto3.dynamodb.conditions import Attr as BotoAttr
 from boto3.dynamodb.conditions import Key as BotoKey
@@ -168,6 +168,12 @@ class BaseAttribute:
     def __sub__(self, other):
         return CombineOperand(UpdateOperand(self), UpdateOperand(other), "-")
 
+    def __radd__(self, other):
+        return CombineOperand(UpdateOperand(other), UpdateOperand(self), "+")
+
+    def __rsub__(self, other):
+        return CombineOperand(UpdateOperand(other), UpdateOperand(self), "-")
+
 
 class Key(BaseAttribute):
     """
@@ -316,10 +322,12 @@ class DynamoModel(metaclass=DynamoModelMeta):
 
 # ---- Update Operators
 
+
 class UpdateOperator(ABC):
     """
     TODO
     """
+
     def __and__(self, other):
         """
         Combine two update expressions
@@ -361,7 +369,9 @@ class UpdateOperator(ABC):
         if update_dict["ExpressionAttributeNames"]:
             result["ExpressionAttributeNames"] = update_dict["ExpressionAttributeNames"]
         if update_dict["ExpressionAttributeValues"]:
-            result["ExpressionAttributeValues"] = update_dict["ExpressionAttributeValues"]
+            result["ExpressionAttributeValues"] = update_dict[
+                "ExpressionAttributeValues"
+            ]
         return result
 
 
@@ -369,6 +379,7 @@ class CombineOperator(UpdateOperator):
     """
     Combine two update expressions
     """
+
     def __init__(self, left, right):
         self.left = left
         self.right = right
@@ -378,12 +389,9 @@ class CombineOperator(UpdateOperator):
         ser_left = self.left.update_dict()
         ser_right = self.right.update_dict()
 
-        items = (
-            list(ser_left.items())
-            + list(ser_right.items())
-        )
+        items = list(ser_left.items()) + list(ser_right.items())
         for key, values in items:
-            if key in ["SET", "REMOVE", "ADD", "DELETE"]:
+            if key in ["SET", "ADD", "DELETE", "REMOVE"]:
                 result[key].extend(values)
 
         result["ExpressionAttributeNames"] = dict(
@@ -402,6 +410,7 @@ class SetOperator(UpdateOperator):
     """
     Support for SET
     """
+
     def __init__(self, attr, operand):
         self.attr = attr
         self.operand = operand
@@ -474,6 +483,7 @@ class DeleteOperator(UpdateOperator):
 
 # ---- Update Operands
 
+
 def serialize_operand(value):
     name = str(uuid.uuid4())[:8]
 
@@ -486,12 +496,22 @@ def serialize_operand(value):
             "ExpressionAttributeNames": {name: value.name},
             "ExpressionAttributeValues": {},
         }
+    elif type(value) in [list, set, tuple]:
+        name = ":" + name
+
+        value = set([to_decimal(v) for v in value])
+
+        return {
+            "UpdateExpression": name,
+            "ExpressionAttributeNames": {},
+            "ExpressionAttributeValues": {name: value},
+        }
     else:
         name = ":" + name
         return {
             "UpdateExpression": name,
             "ExpressionAttributeNames": {},
-            "ExpressionAttributeValues": {name: value},
+            "ExpressionAttributeValues": {name: to_decimal(value)},
         }
 
 
@@ -499,6 +519,7 @@ class UpdateOperand:
     """
     Inner part of an update expression
     """
+
     def __init__(self, value):
         self.value = value
 
@@ -510,6 +531,7 @@ class CombineOperand(UpdateOperand):
     """
     Add or subtact two expressions
     """
+
     def __init__(self, left, right, symbol):
         self.left = left
         self.right = right

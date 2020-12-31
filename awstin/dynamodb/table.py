@@ -176,7 +176,7 @@ class Table:
             boto_query["ConditionExpression"] = condition_expression
 
         result = self._boto3_table.update_item(**boto_query)
-        return self.data_model._from_dynamodb(result)
+        return self.data_model._from_dynamodb(result["Attributes"])
 
     def delete_item(self, key):
         """

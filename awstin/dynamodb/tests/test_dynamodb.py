@@ -1121,3 +1121,6 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(len(items), 1)
             (item,) = items
             self.assertEqual(item, hit)
+
+    def test_update_item(self):
+        
