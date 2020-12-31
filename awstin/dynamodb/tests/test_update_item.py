@@ -62,6 +62,26 @@ class TestUpdateItem(unittest.TestCase):
             )
             self.assertEqual(result, expected)
 
+    def test_update_set_attr(self):
+        update_expression = MyModel.an_attr.set(MyModel.another_attr)
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr=11,
+                another_attr=22,
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr=22,
+                another_attr=22,
+            )
+            self.assertEqual(result, expected)
+
     def test_update_set_attr_plus_value(self):
         update_expression = MyModel.an_attr.set(MyModel.an_attr + 100)
 
@@ -245,6 +265,47 @@ class TestUpdateItem(unittest.TestCase):
             )
             self.assertEqual(result, expected)
 
+    def test_update_delete_all(self):
+        update_expression = (
+            MyModel.an_attr.delete(["a", "c", "e", "g"])
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr={"a", "c", "e", "g"},
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+            )
+            self.assertEqual(result, expected)
+
+    def test_update_delete_multiple(self):
+        update_expression = (
+            MyModel.an_attr.delete(["b", "c", "d", "e"])
+            & MyModel.another_attr.delete([1, 2, 3])
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr={"a", "c", "e", "g"},
+                another_attr={1, 2, 3},
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr={"a", "g"},
+            )
+            self.assertEqual(result, expected)
+
     def test_update_add_numerical(self):
         update_expression = (
             MyModel.an_attr.add(50)
@@ -323,6 +384,28 @@ class TestUpdateItem(unittest.TestCase):
             expected = MyModel(
                 pkey="bbb",
                 an_attr=11,
+                another_attr={1, 2, 3},
+            )
+            self.assertEqual(result, expected)
+
+    def test_update_add_multiple(self):
+        update_expression = (
+            MyModel.another_attr.add([1, 2, 3])
+            & MyModel.an_attr.add(20)
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr=11,
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr=31,
                 another_attr={1, 2, 3},
             )
             self.assertEqual(result, expected)
