@@ -5,7 +5,6 @@ from botocore.exceptions import ClientError
 
 from awstin.config import aws_config
 from awstin.constants import TEST_DYNAMODB_ENDPOINT
-from awstin.dynamodb.exceptions import UpdateConditionFalse
 from awstin.dynamodb.utils import to_decimal
 
 # Testing parameter to change table listing page size
@@ -167,6 +166,20 @@ class Table:
         Update an item in the table given an awstin update expression.
 
         Can optionally have a condition expression.
+
+        Parameters
+        ---------
+        key : Any
+            Primary key, specified in any valid way
+        update_expression : awstin.dynamodb.orm.UpdateOperator
+            Update expression. See docs for construction.
+        condition_expression : Query, optional
+            Optional condition expression
+
+        Returns
+        -------
+        DynamoModel or None
+            Updated model, or None if the condition expression fails
         """
         boto_query = dict(
             Key=self._get_primary_key(key),
@@ -179,10 +192,8 @@ class Table:
 
         try:
             result = self._boto3_table.update_item(**boto_query)
-        except ClientError as e:
-            raise UpdateConditionFalse(
-                "Update condition evaluated to False."
-            ) from e
+        except ClientError:
+            return None
 
         return self.data_model._from_dynamodb(result["Attributes"])
 

@@ -1,7 +1,7 @@
-from abc import abstractmethod, ABC
+import uuid
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Union
-import uuid
 
 from boto3.dynamodb.conditions import Attr as BotoAttr
 from boto3.dynamodb.conditions import Key as BotoKey
