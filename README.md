@@ -155,6 +155,29 @@ scan_filter = (
 results = my_table.scan(scan_filter)
 ```
 
+**Updating Items**
+
+A syntax is also available for updating items, with an optional condition expression:
+
+```python
+update_expression = (
+    MyModel.an_attr.set(5 - MyModel.another_attr)
+    & MyModel.third_attr.add(100)
+    & MyModel.another_attr.remove()
+    & MyModel.set_attr.delete([2, 3])
+)
+
+condition_expression = MyModel.an_attr > 11
+
+updated = my_table.update_item(
+    "primary_key",
+    update_expression,
+    condition_expression,
+)
+```
+
+`update_item` returns `None` if the condition evaluates to `False`.
+
 **Float and Decimal**
 
 Floats should be used when working with DynamoDB through `awstin`. Conversions between float and Decimal is done internally.
