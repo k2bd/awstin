@@ -87,6 +87,24 @@ class TestUpdateItem(unittest.TestCase):
             )
             self.assertEqual(result, expected)
 
+    def test_update_set_nested_to_nested_map(self):
+        update_expression = MyModel.an_attr.a.l.set(MyModel.an_attr.c)
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr={"a": {"l": "m", "n": "o"}, "c": "d"},
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr={"a": {"l": "d", "n": "o"}, "c": "d"},
+            )
+            self.assertEqual(result, expected)
+
     def test_update_set_nested_list(self):
         update_expression = MyModel.an_attr[1].set("e")
 
@@ -102,6 +120,24 @@ class TestUpdateItem(unittest.TestCase):
             expected = MyModel(
                 pkey="bbb",
                 an_attr=["a", "e", "c"],
+            )
+            self.assertEqual(result, expected)
+
+    def test_update_set_nested_to_nested_list(self):
+        update_expression = MyModel.an_attr[1].set(MyModel.an_attr[0])
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr=["a", "b", "c"],
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr=["a", "a", "c"],
             )
             self.assertEqual(result, expected)
 
