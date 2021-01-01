@@ -1142,3 +1142,28 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(len(items), 1)
             (item,) = items
             self.assertEqual(item, hit)
+
+    def test_delete_condition(self):
+        with self.table_without_sortkey as table:
+            test_item = ModelWithoutSortkey(
+                hashkey="123",
+                another_attr=55,
+            )
+            table.put_item(test_item)
+
+            result = table.delete_item(
+                "123",
+                condition_expression=ModelWithoutSortkey.another_attr > 55,
+            )
+
+            self.assertFalse(result)
+            self.assertEqual(table["123"], test_item)
+
+            result = table.delete_item(
+                "123",
+                condition_expression=ModelWithoutSortkey.another_attr >= 55,
+            )
+
+            self.assertTrue(result)
+            with self.assertRaises(KeyError):
+                table["123"]
