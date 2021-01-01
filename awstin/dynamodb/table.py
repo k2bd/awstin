@@ -192,8 +192,11 @@ class Table:
 
         try:
             result = self._boto3_table.update_item(**boto_query)
-        except ClientError:
-            return None
+        except ClientError as e:
+            if "ConditionalCheckFailedException" in str(e):
+                return None
+            else:
+                raise e
 
         return self.data_model._from_dynamodb(result["Attributes"])
 

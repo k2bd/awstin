@@ -327,6 +327,7 @@ class UpdateOperator(ABC):
     """
     A representation of an UpdateItem expression
     """
+
     def __and__(self, other):
         """
         Combine two update expressions
@@ -415,16 +416,22 @@ class SetOperator(UpdateOperator):
         self.operand = operand
 
     def update_dict(self):
-        attr_name = "#" + str(uuid.uuid4())[:8]
+        serialized_attr = itemize_attr(self.attr)
+        serialized_operand = self.operand.serialize()
 
-        serialized = self.operand.serialize()
-
-        attribute_names = dict(**serialized["ExpressionAttributeNames"])
-        attribute_names[attr_name] = self.attr.name
+        attribute_names = dict(
+            **serialized_operand["ExpressionAttributeNames"],
+            **serialized_attr["ExpressionAttributeNames"],
+        )
         return {
-            "SET": [f"{attr_name} = " + serialized["UpdateExpression"]],
+            "SET": [
+                f"{serialized_attr['UpdateExpression']} = "
+                + serialized_operand["UpdateExpression"]
+            ],
             "ExpressionAttributeNames": attribute_names,
-            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
+            "ExpressionAttributeValues": serialized_operand[
+                "ExpressionAttributeValues"
+            ],
         }
 
 
@@ -434,16 +441,22 @@ class AddOperator(UpdateOperator):
         self.operand = operand
 
     def update_dict(self):
-        attr_name = "#" + str(uuid.uuid4())[:8]
+        serialized_attr = itemize_attr(self.attr)
+        serialized_operand = self.operand.serialize()
 
-        serialized = self.operand.serialize()
-
-        attribute_names = dict(**serialized["ExpressionAttributeNames"])
-        attribute_names[attr_name] = self.attr.name
+        attribute_names = dict(
+            **serialized_operand["ExpressionAttributeNames"],
+            **serialized_attr["ExpressionAttributeNames"],
+        )
         return {
-            "ADD": [f"{attr_name} " + serialized["UpdateExpression"]],
+            "ADD": [
+                f"{serialized_attr['UpdateExpression']} "
+                + serialized_operand["UpdateExpression"]
+            ],
             "ExpressionAttributeNames": attribute_names,
-            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
+            "ExpressionAttributeValues": serialized_operand[
+                "ExpressionAttributeValues"
+            ],
         }
 
 
@@ -452,11 +465,11 @@ class RemoveOperator(UpdateOperator):
         self.attr = attr
 
     def update_dict(self):
-        attr_name = "#" + str(uuid.uuid4())[:8]
+        serialized_attr = itemize_attr(self.attr)
 
         return {
-            "REMOVE": [attr_name],
-            "ExpressionAttributeNames": {attr_name: self.attr.name},
+            "REMOVE": [serialized_attr['UpdateExpression']],
+            "ExpressionAttributeNames": serialized_attr["ExpressionAttributeNames"],
             "ExpressionAttributeValues": {},
         }
 
@@ -467,16 +480,22 @@ class DeleteOperator(UpdateOperator):
         self.operand = operand
 
     def update_dict(self):
-        attr_name = "#" + str(uuid.uuid4())[:8]
+        serialized_attr = itemize_attr(self.attr)
+        serialized_operand = self.operand.serialize()
 
-        serialized = self.operand.serialize()
-
-        attribute_names = dict(**serialized["ExpressionAttributeNames"])
-        attribute_names[attr_name] = self.attr.name
+        attribute_names = dict(
+            **serialized_operand["ExpressionAttributeNames"],
+            **serialized_attr["ExpressionAttributeNames"],
+        )
         return {
-            "DELETE": [f"{attr_name} " + serialized["UpdateExpression"]],
+            "DELETE": [
+                f"{serialized_attr['UpdateExpression']} "
+                + serialized_operand["UpdateExpression"]
+            ],
             "ExpressionAttributeNames": attribute_names,
-            "ExpressionAttributeValues": serialized["ExpressionAttributeValues"],
+            "ExpressionAttributeValues": serialized_operand[
+                "ExpressionAttributeValues"
+            ],
         }
 
 
@@ -489,12 +508,7 @@ def serialize_operand(value):
     if isinstance(value, UpdateOperand):
         return value.serialize()
     elif isinstance(value, BaseAttribute):
-        name = "#" + name
-        return {
-            "UpdateExpression": name,
-            "ExpressionAttributeNames": {name: value.name},
-            "ExpressionAttributeValues": {},
-        }
+        return itemize_attr(value)
     elif type(value) in [list, set, tuple]:
         name = ":" + name
 
@@ -512,6 +526,32 @@ def serialize_operand(value):
             "ExpressionAttributeNames": {},
             "ExpressionAttributeValues": {name: to_decimal(value)},
         }
+
+
+def itemize_attr(attr):
+    # Separate indexes
+    items = attr.name.split("[")
+    prefix = items[0]
+    suffixes = items[1:]
+    suffix = ""
+    for s in suffixes:
+        suffix += "[" + s
+
+    # Separate attributes
+    sections = prefix.split(".")
+    serialized_sections = []
+    name_map = {}
+    for section in sections:
+        name = "#" + str(uuid.uuid4())[:8]
+        name_map[name] = section
+        serialized_sections.append(name)
+
+    result = {
+        "UpdateExpression": ".".join(serialized_sections) + suffix,
+        "ExpressionAttributeNames": name_map,
+        "ExpressionAttributeValues": {},
+    }
+    return result
 
 
 class UpdateOperand:
