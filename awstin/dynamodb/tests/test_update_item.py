@@ -142,19 +142,20 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_set_nested_to_nested_complex(self):
+        # Pepper in some reserved keywords as well to test
         update_expression = (
-            MyModel.an_attr[1].c.set(MyModel.another_attr.b[1])
-            & MyModel.another_attr.c[0].set(MyModel.an_attr[0].a)
+            MyModel.an_attr[1].name.set(MyModel.another_attr.BINARY[1])
+            & MyModel.another_attr.CASCADE[0].set(MyModel.an_attr[0].atomic)
         )
 
         with self.temp_table as table:
             item = MyModel(
                 pkey="bbb",
-                an_attr=[{"a": "b"}, {"c": "d"}, {"d": "e"}],
+                an_attr=[{"atomic": "b"}, {"name": "d"}, {"both": "e"}],
                 another_attr={
-                    "a": [1, 2, 3],
-                    "b": [4, 5, 6],
-                    "c": [7, 8, 9],
+                    "AGENT": [1, 2, 3],
+                    "BINARY": [4, 5, 6],
+                    "CASCADE": [7, 8, 9],
                 },
             )
             table.put_item(item)
@@ -163,11 +164,11 @@ class TestUpdateItem(unittest.TestCase):
 
             expected = MyModel(
                 pkey="bbb",
-                an_attr=[{"a": "b"}, {"c": 5}, {"d": "e"}],
+                an_attr=[{"atomic": "b"}, {"name": 5}, {"both": "e"}],
                 another_attr={
-                    "a": [1, 2, 3],
-                    "b": [4, 5, 6],
-                    "c": ["b", 8, 9],
+                    "AGENT": [1, 2, 3],
+                    "BINARY": [4, 5, 6],
+                    "CASCADE": ["b", 8, 9],
                 },
             )
             self.assertEqual(result, expected)
