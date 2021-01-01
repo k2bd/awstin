@@ -686,6 +686,27 @@ class TestDynamoDB(unittest.TestCase):
 
             self.assertTrue(item.another_attr is NOT_SET)
 
+    def test_filter_size(self):
+        with self.table_without_sortkey as table:
+            hit = ModelWithoutSortkey(
+                hashkey="interesting",
+                another_attr=[1, 2, 3, 4]
+            )
+            miss = ModelWithoutSortkey(
+                hashkey="typewriter",
+                another_attr=[1, 2, 3],
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            attr_filter = ModelWithoutSortkey.another_attr.size() > 3
+
+            items = list(table.scan(scan_filter=attr_filter))
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
     def test_query_begins_with(self):
         with self.table_with_str_sortkey as table:
             hit = ModelWithSortkey(
@@ -1121,3 +1142,28 @@ class TestDynamoDB(unittest.TestCase):
             self.assertEqual(len(items), 1)
             (item,) = items
             self.assertEqual(item, hit)
+
+    def test_delete_condition(self):
+        with self.table_without_sortkey as table:
+            test_item = ModelWithoutSortkey(
+                hashkey="123",
+                another_attr=55,
+            )
+            table.put_item(test_item)
+
+            result = table.delete_item(
+                "123",
+                condition_expression=ModelWithoutSortkey.another_attr > 55,
+            )
+
+            self.assertFalse(result)
+            self.assertEqual(table["123"], test_item)
+
+            result = table.delete_item(
+                "123",
+                condition_expression=ModelWithoutSortkey.another_attr >= 55,
+            )
+
+            self.assertTrue(result)
+            with self.assertRaises(KeyError):
+                table["123"]

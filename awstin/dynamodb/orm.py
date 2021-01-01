@@ -33,7 +33,7 @@ class BaseAttribute:
         self._name_on_model = None
 
     @property
-    def name(self):
+    def _awstin_name(self):
         if self._attribute_name is not None:
             return self._attribute_name
         else:
@@ -46,13 +46,13 @@ class BaseAttribute:
         try:
             return super().__getattr__(name)
         except AttributeError:
-            return type(self)(attribute_name=f"{self.name}.{name}")
+            return type(self)(attribute_name=f"{self._awstin_name}.{name}")
 
     def __getitem__(self, index):
         """
         Support for nested container queries
         """
-        return type(self)(attribute_name=f"{self.name}[{index}]")
+        return type(self)(attribute_name=f"{self._awstin_name}[{index}]")
 
     # --- Query and scan filter expressions ---
 
@@ -65,7 +65,7 @@ class BaseAttribute:
         value : str
             Starting string for returned results
         """
-        return self._query_type(self.name).begins_with(to_decimal(value))
+        return self._query_type(self._awstin_name).begins_with(to_decimal(value))
 
     def between(self, low, high):
         """
@@ -78,25 +78,25 @@ class BaseAttribute:
         high : Any
             High end of the range
         """
-        return self._query_type(self.name).between(
+        return self._query_type(self._awstin_name).between(
             to_decimal(low),
             to_decimal(high),
         )
 
     def __eq__(self, value):
-        return self._query_type(self.name).eq(to_decimal(value))
+        return self._query_type(self._awstin_name).eq(to_decimal(value))
 
     def __gt__(self, value):
-        return self._query_type(self.name).gt(to_decimal(value))
+        return self._query_type(self._awstin_name).gt(to_decimal(value))
 
     def __ge__(self, value):
-        return self._query_type(self.name).gte(to_decimal(value))
+        return self._query_type(self._awstin_name).gte(to_decimal(value))
 
     def __lt__(self, value):
-        return self._query_type(self.name).lt(to_decimal(value))
+        return self._query_type(self._awstin_name).lt(to_decimal(value))
 
     def __le__(self, value):
-        return self._query_type(self.name).lte(to_decimal(value))
+        return self._query_type(self._awstin_name).lte(to_decimal(value))
 
     def attribute_type(self, value):
         """
@@ -107,7 +107,7 @@ class BaseAttribute:
         value : str
             Index for a DynamoDB attribute type (e.g. "N" for Number)
         """
-        return BotoAttr(self.name).attribute_type(to_decimal(value))
+        return BotoAttr(self._awstin_name).attribute_type(to_decimal(value))
 
     def contains(self, value):
         """
@@ -119,13 +119,13 @@ class BaseAttribute:
         values : Any
             Result must contain this item
         """
-        return BotoAttr(self.name).contains(to_decimal(value))
+        return BotoAttr(self._awstin_name).contains(to_decimal(value))
 
     def exists(self):
         """
         Filter results by existence of an attribute
         """
-        return BotoAttr(self.name).exists()
+        return BotoAttr(self._awstin_name).exists()
 
     def in_(self, values):
         """
@@ -137,16 +137,22 @@ class BaseAttribute:
             Allowed values of returned results
         """
         in_values = [to_decimal(value) for value in values]
-        return BotoAttr(self.name).is_in(in_values)
+        return BotoAttr(self._awstin_name).is_in(in_values)
 
     def __ne__(self, value):
-        return BotoAttr(self.name).ne(to_decimal(value))
+        return BotoAttr(self._awstin_name).ne(to_decimal(value))
 
     def not_exists(self):
         """
         Filter results by non-existence of an attribute
         """
-        return BotoAttr(self.name).not_exists()
+        return BotoAttr(self._awstin_name).not_exists()
+
+    def size(self):
+        """
+        Size of a collection
+        """
+        return Size(self._awstin_name)
 
     # --- Update expressions ---
 
@@ -192,6 +198,14 @@ class Attr(BaseAttribute):
     _query_type = BotoAttr
 
 
+def size_query(self, *args, **kwargs):
+    return BotoAttr(self._awstin_name).size()
+
+
+class Size(BaseAttribute):
+    _query_type = size_query
+
+
 class DynamoModelMeta(type):
     def __getattribute__(self, name):
         attr = super().__getattribute__(name)
@@ -203,7 +217,7 @@ class DynamoModelMeta(type):
 
     def _dynamodb_attributes(self):
         result = {
-            getattr(self, attr).name: attr
+            getattr(self, attr)._awstin_name: attr
             for attr in dir(self)
             if isinstance(getattr(self, attr), BaseAttribute)
         }
@@ -512,7 +526,7 @@ def serialize_operand(value):
     elif type(value) in [list, set, tuple]:
         name = ":" + name
 
-        value = set([to_decimal(v) for v in value])
+        value = type(value)([to_decimal(v) for v in value])
 
         return {
             "UpdateExpression": name,
@@ -530,24 +544,43 @@ def serialize_operand(value):
 
 def itemize_attr(attr):
     # Separate indexes
-    items = attr.name.split("[")
-    prefix = items[0]
-    suffixes = items[1:]
-    suffix = ""
-    for s in suffixes:
-        suffix += "[" + s
+    parts = []
+
+    current_section = ""
+    for letter in attr._awstin_name:
+        if letter == "[":
+            parts.append(current_section)
+            current_section = "["
+        elif letter == "]":
+            parts.append(current_section + "]")
+            current_section = ""
+        else:
+            current_section += letter
+    if current_section:
+        parts.append(current_section)
+
+    serialized = ""
+    name_map = {}
 
     # Separate attributes
-    sections = prefix.split(".")
-    serialized_sections = []
-    name_map = {}
-    for section in sections:
-        name = "#" + str(uuid.uuid4())[:8]
-        name_map[name] = section
-        serialized_sections.append(name)
+    for part in parts:
+        if "[" in part and "]" in part:
+            serialized += part
+        else:
+            if part.startswith("."):
+                serialized += "."
+                part = part[1:]
+            sections = part.split(".")
+            serialized_sections = []
+
+            for section in sections:
+                name = "#" + str(uuid.uuid4())[:8]
+                name_map[name] = section
+                serialized_sections.append(name)
+            serialized += ".".join(serialized_sections)
 
     result = {
-        "UpdateExpression": ".".join(serialized_sections) + suffix,
+        "UpdateExpression": serialized,
         "ExpressionAttributeNames": name_map,
         "ExpressionAttributeValues": {},
     }

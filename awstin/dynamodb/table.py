@@ -200,13 +200,33 @@ class Table:
 
         return self.data_model._from_dynamodb(result["Attributes"])
 
-    def delete_item(self, key):
+    def delete_item(self, key, condition_expression=None):
         """
         Delete an item, given either a primary key as a dict, or given simply
         the value of the partition key if there is no sort key
+
+        Returns
+        -------
+        bool
+            True if the delete, False if the condition was not satisfied
         """
         primary_key = self._get_primary_key(key)
-        self._boto3_table.delete_item(Key=primary_key)
+        condition_kwargs = (
+            {"ConditionExpression": condition_expression}
+            if condition_expression is not None else {}
+        )
+
+        try:
+            self._boto3_table.delete_item(
+                Key=primary_key,
+                **condition_kwargs,
+            )
+            return True
+        except ClientError as e:
+            if "ConditionalCheckFailedException" in str(e):
+                return False
+            else:
+                raise e
 
     def scan(self, scan_filter=None):
         """
