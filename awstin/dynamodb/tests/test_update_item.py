@@ -141,6 +141,37 @@ class TestUpdateItem(unittest.TestCase):
             )
             self.assertEqual(result, expected)
 
+    def test_update_set_nested_to_nested_complex(self):
+        update_expression = (
+            MyModel.an_attr[1].c.set(MyModel.another_attr.b[1])
+            & MyModel.another_attr.c[0].set(MyModel.an_attr[0].a)
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="bbb",
+                an_attr=[{"a": "b"}, {"c": "d"}, {"d": "e"}],
+                another_attr={
+                    "a": [1, 2, 3],
+                    "b": [4, 5, 6],
+                    "c": [7, 8, 9],
+                },
+            )
+            table.put_item(item)
+
+            result = table.update_item("bbb", update_expression)
+
+            expected = MyModel(
+                pkey="bbb",
+                an_attr=[{"a": "b"}, {"c": 5}, {"d": "e"}],
+                another_attr={
+                    "a": [1, 2, 3],
+                    "b": [4, 5, 6],
+                    "c": ["b", 8, 9],
+                },
+            )
+            self.assertEqual(result, expected)
+
     def test_update_set_attr(self):
         update_expression = MyModel.an_attr.set(MyModel.another_attr)
 
@@ -279,7 +310,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_delete_int_set(self):
-        update_expression = MyModel.an_attr.delete([2, 3, 4, 5])
+        update_expression = MyModel.an_attr.delete({2, 3, 4, 5})
 
         with self.temp_table as table:
             item = MyModel(
@@ -297,7 +328,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_delete_float_set(self):
-        update_expression = MyModel.an_attr.delete([2.2, 3.3, 4.4, 5.5])
+        update_expression = MyModel.an_attr.delete({2.2, 3.3, 4.4, 5.5})
 
         with self.temp_table as table:
             item = MyModel(
@@ -315,7 +346,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_delete_string_set(self):
-        update_expression = MyModel.an_attr.delete(["b", "c", "d", "e"])
+        update_expression = MyModel.an_attr.delete({"b", "c", "d", "e"})
 
         with self.temp_table as table:
             item = MyModel(
@@ -333,7 +364,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_delete_all(self):
-        update_expression = MyModel.an_attr.delete(["a", "c", "e", "g"])
+        update_expression = MyModel.an_attr.delete({"a", "c", "e", "g"})
 
         with self.temp_table as table:
             item = MyModel(
@@ -351,8 +382,8 @@ class TestUpdateItem(unittest.TestCase):
 
     def test_update_delete_multiple(self):
         update_expression = MyModel.an_attr.delete(
-            ["b", "c", "d", "e"]
-        ) & MyModel.another_attr.delete([1, 2, 3])
+            {"b", "c", "d", "e"}
+        ) & MyModel.another_attr.delete({1, 2, 3})
 
         with self.temp_table as table:
             item = MyModel(
@@ -389,7 +420,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_add_set(self):
-        update_expression = MyModel.an_attr.add([1, 2, 3])
+        update_expression = MyModel.an_attr.add({1, 2, 3})
 
         with self.temp_table as table:
             item = MyModel(
@@ -426,7 +457,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_add_nonexistent_set(self):
-        update_expression = MyModel.another_attr.add([1, 2, 3])
+        update_expression = MyModel.another_attr.add({1, 2, 3})
 
         with self.temp_table as table:
             item = MyModel(
@@ -445,7 +476,7 @@ class TestUpdateItem(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_update_add_multiple(self):
-        update_expression = MyModel.another_attr.add([1, 2, 3]) & MyModel.an_attr.add(
+        update_expression = MyModel.another_attr.add({1, 2, 3}) & MyModel.an_attr.add(
             20
         )
 
@@ -470,7 +501,7 @@ class TestUpdateItem(unittest.TestCase):
             MyModel.an_attr.set(5 - MyModel.another_attr)
             & MyModel.third_attr.add(100)
             & MyModel.another_attr.remove()
-            & MyModel.set_attr.delete([2, 3])
+            & MyModel.set_attr.delete({2, 3})
         )
 
         with self.temp_table as table:

@@ -148,6 +148,12 @@ class BaseAttribute:
         """
         return BotoAttr(self.name).not_exists()
 
+    def size(self):
+        """
+        Size of a collection
+        """
+        return Size(self.name)
+
     # --- Update expressions ---
 
     def set(self, expression):
@@ -190,6 +196,14 @@ class Attr(BaseAttribute):
     """
 
     _query_type = BotoAttr
+
+
+def size_query(self, *args, **kwargs):
+    return BotoAttr(self.name).size()
+
+
+class Size(BaseAttribute):
+    _query_type = size_query
 
 
 class DynamoModelMeta(type):
@@ -512,7 +526,7 @@ def serialize_operand(value):
     elif type(value) in [list, set, tuple]:
         name = ":" + name
 
-        value = set([to_decimal(v) for v in value])
+        value = type(value)([to_decimal(v) for v in value])
 
         return {
             "UpdateExpression": name,

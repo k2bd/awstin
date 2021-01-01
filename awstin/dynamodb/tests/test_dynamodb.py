@@ -686,6 +686,27 @@ class TestDynamoDB(unittest.TestCase):
 
             self.assertTrue(item.another_attr is NOT_SET)
 
+    def test_filter_size(self):
+        with self.table_without_sortkey as table:
+            hit = ModelWithoutSortkey(
+                hashkey="interesting",
+                another_attr=[1, 2, 3, 4]
+            )
+            miss = ModelWithoutSortkey(
+                hashkey="typewriter",
+                another_attr=[1, 2, 3],
+            )
+
+            table.put_item(hit)
+            table.put_item(miss)
+
+            attr_filter = ModelWithoutSortkey.another_attr.size() > 3
+
+            items = list(table.scan(scan_filter=attr_filter))
+            self.assertEqual(len(items), 1)
+            (item,) = items
+            self.assertEqual(item, hit)
+
     def test_query_begins_with(self):
         with self.table_with_str_sortkey as table:
             hit = ModelWithSortkey(
