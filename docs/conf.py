@@ -14,7 +14,7 @@
 # import sys
 # sys.path.insert(0, '/Users/kevin.duff/dev/awstin/awstin')
 
-import sphinx_rtd_theme
+import sphinx_rtd_theme  # noqa
 
 from awstin import __version__
 
