@@ -1,1 +1,4 @@
-from .api import *  # noqa
+__all__ = ["SNSTopic"]
+
+
+from .api import SNSTopic  # noqa
