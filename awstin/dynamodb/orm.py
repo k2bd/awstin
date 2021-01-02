@@ -264,9 +264,21 @@ class DynamoModelMeta(type):
 class DynamoModel(metaclass=DynamoModelMeta):
     """
     Class defining an ORM model for a DynamoDB table.
+
+    Subclasses must have a ``_table_name_`` attribute. Attributes making up
+    the data model should be Attr or Key instances.
+
+    Subclasses representing indexes should also have an ``_index_name_``
+    attribute
     """
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        **kwargs : dict of (str, Any)
+            Initialization of Attr and Key attributes.
+        """
         model_attrs = type(self)._dynamodb_attributes().values()
 
         for name in model_attrs:
