@@ -2,9 +2,10 @@
 
 [![PyPI](https://img.shields.io/pypi/v/awstin)](https://pypi.org/project/awstin/) ![Dev Status](https://img.shields.io/pypi/status/awstin)
 
-![CI Build](https://github.com/k2bd/awstin/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/k2bd/awstin/branch/master/graph/badge.svg)](https://codecov.io/gh/k2bd/awstin)
-
+![CI Build](https://github.com/k2bd/awstin/workflows/CI/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/awstin/badge/?version=latest)](https://awstin.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/k2bd/awstin/branch/master/graph/badge.svg)](https://codecov.io/gh/k2bd/awstin)
+
 
 High-level utilities for building and testing AWS applications in Python.
 
