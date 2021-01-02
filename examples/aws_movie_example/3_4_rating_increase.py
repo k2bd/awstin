@@ -17,4 +17,4 @@ def increase_rating(title, year, rating_increase):
 if __name__ == '__main__':
     update_response = increase_rating("The Big New Movie", 2015, 1)
     print("Update movie succeeded:")
-    print(update_response.__dict__)
+    print(update_response.serialize())
