@@ -85,12 +85,12 @@ class Table:
     Items can be retrieved from the table by a shorthand depending on the
     primary key. If it's only a partition key, items can be retrieved by the
     value of the partition key:
-    
+
     ``my_table["hashval"]``
-    
+
     If it's a partition and sort key, items can be retrived by a hashkey,
     sortkey tuple:
-    
+
     ``my_table["hashval", 123]``
 
     Items can also be retrieved in a dict-like way:
