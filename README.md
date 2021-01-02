@@ -4,6 +4,8 @@
 
 ![CI Build](https://github.com/k2bd/awstin/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/k2bd/awstin/branch/master/graph/badge.svg)](https://codecov.io/gh/k2bd/awstin)
 
+[![Documentation Status](https://readthedocs.org/projects/awstin/badge/?version=latest)](https://awstin.readthedocs.io/en/latest/?badge=latest)
+
 High-level utilities for building and testing AWS applications in Python.
 
 
