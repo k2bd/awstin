@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>awstin.dynamodb.testing &#8212; awstin 0.0.17 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for awstin.dynamodb.testing</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">awstin.dynamodb</span> <span class="kn">import</span> <span class="n">DynamoDB</span>
+
+
+<div class="viewcode-block" id="temporary_dynamodb_table"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.testing.temporary_dynamodb_table">[docs]</a><span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">temporary_dynamodb_table</span><span class="p">(</span>
+    <span class="n">data_model</span><span class="p">,</span>
+    <span class="n">hashkey_name</span><span class="p">,</span>
+    <span class="n">hashkey_type</span><span class="o">=</span><span class="s2">&quot;S&quot;</span><span class="p">,</span>
+    <span class="n">sortkey_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">sortkey_type</span><span class="o">=</span><span class="s2">&quot;S&quot;</span><span class="p">,</span>
+    <span class="n">delay</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">extra_attributes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">extra_kwargs</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Context manager creating a temporary DynamoDB table for testing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data_model : DynamoModel</span>
+<span class="sd">        Model to interface with this table</span>
+<span class="sd">    hashkey_name : str</span>
+<span class="sd">        Name of the hash key of the table</span>
+<span class="sd">    hashkey_type : str, optional</span>
+<span class="sd">        Type of the hash key (&quot;S&quot;, &quot;N&quot;, or &quot;B&quot;). Default &quot;S&quot;</span>
+<span class="sd">    sortkey_name : str, optional</span>
+<span class="sd">        Optional sort key for the temporary table</span>
+<span class="sd">    sortkey_type : str, optional</span>
+<span class="sd">        Type of the sort key if there is one (&quot;S&quot;, &quot;N&quot;, or &quot;B&quot;). Default &quot;S&quot;</span>
+<span class="sd">    delay : float, optional</span>
+<span class="sd">        Delay in seconds between checks if the table exists</span>
+<span class="sd">    max_attempts : int, optional</span>
+<span class="sd">        Max number of attempts to check if the table exists, after which the</span>
+<span class="sd">        client gives up.</span>
+<span class="sd">    extra_attributes : dict, optional</span>
+<span class="sd">        Additional attribute definitions to add to create_table</span>
+<span class="sd">    **extra_kwargs : dict</span>
+<span class="sd">        Additional keyword arguments will be passed to create_table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: make filter more specific</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="ne">ResourceWarning</span><span class="p">)</span>
+
+    <span class="n">table_name</span> <span class="o">=</span> <span class="n">data_model</span><span class="o">.</span><span class="n">_table_name_</span>
+
+    <span class="n">dynamodb</span> <span class="o">=</span> <span class="n">DynamoDB</span><span class="p">()</span>
+
+    <span class="n">attribute_definitions</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;AttributeName&quot;</span><span class="p">:</span> <span class="n">hashkey_name</span><span class="p">,</span>
+            <span class="s2">&quot;AttributeType&quot;</span><span class="p">:</span> <span class="n">hashkey_type</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+    <span class="n">key_schema</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;AttributeName&quot;</span><span class="p">:</span> <span class="n">hashkey_name</span><span class="p">,</span>
+            <span class="s2">&quot;KeyType&quot;</span><span class="p">:</span> <span class="s2">&quot;HASH&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">sortkey_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">sortkey_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">attribute_definitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;AttributeName&quot;</span><span class="p">:</span> <span class="n">sortkey_name</span><span class="p">,</span>
+                <span class="s2">&quot;AttributeType&quot;</span><span class="p">:</span> <span class="n">sortkey_type</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">key_schema</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;AttributeName&quot;</span><span class="p">:</span> <span class="n">sortkey_name</span><span class="p">,</span>
+                <span class="s2">&quot;KeyType&quot;</span><span class="p">:</span> <span class="s2">&quot;RANGE&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">extra_attributes</span><span class="p">:</span>
+        <span class="n">attribute_definitions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_attributes</span><span class="p">)</span>
+
+    <span class="n">dynamodb</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span>
+        <span class="n">TableName</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+        <span class="n">AttributeDefinitions</span><span class="o">=</span><span class="n">attribute_definitions</span><span class="p">,</span>
+        <span class="n">KeySchema</span><span class="o">=</span><span class="n">key_schema</span><span class="p">,</span>
+        <span class="n">ProvisionedThroughput</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ReadCapacityUnits&quot;</span><span class="p">:</span> <span class="mi">123</span><span class="p">,</span> <span class="s2">&quot;WriteCapacityUnits&quot;</span><span class="p">:</span> <span class="mi">123</span><span class="p">},</span>
+        <span class="o">**</span><span class="n">extra_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">exists_waiter</span> <span class="o">=</span> <span class="n">dynamodb</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_waiter</span><span class="p">(</span><span class="s2">&quot;table_exists&quot;</span><span class="p">)</span>
+    <span class="n">not_exists_waiter</span> <span class="o">=</span> <span class="n">dynamodb</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_waiter</span><span class="p">(</span><span class="s2">&quot;table_not_exists&quot;</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">exists_waiter</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span>
+        <span class="n">TableName</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+        <span class="n">WaiterConfig</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;Delay&quot;</span><span class="p">:</span> <span class="n">delay</span><span class="p">,</span>
+            <span class="s2">&quot;MaxAttempts&quot;</span><span class="p">:</span> <span class="n">max_attempts</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Could not create table </span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">dynamodb</span><span class="p">[</span><span class="n">data_model</span><span class="p">]</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">dynamodb</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">delete_table</span><span class="p">(</span><span class="n">TableName</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">not_exists_waiter</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span>
+            <span class="n">TableName</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+            <span class="n">WaiterConfig</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;Delay&quot;</span><span class="p">:</span> <span class="n">delay</span><span class="p">,</span>
+                <span class="s2">&quot;MaxAttempts&quot;</span><span class="p">:</span> <span class="n">max_attempts</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Could not delete table </span><span class="si">{!r}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="p">))</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">awstin</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.apigateway.html">awstin.apigateway package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.awslambda.html">awstin.awslambda package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.dynamodb.html">awstin.dynamodb package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.sns.html">awstin.sns package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Kevin Duff.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

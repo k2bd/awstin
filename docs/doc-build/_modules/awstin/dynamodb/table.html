@@ -1,0 +1,392 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>awstin.dynamodb.table &#8212; awstin 0.0.17 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for awstin.dynamodb.table</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">boto3</span>
+<span class="kn">from</span> <span class="nn">botocore.exceptions</span> <span class="kn">import</span> <span class="n">ClientError</span>
+
+<span class="kn">from</span> <span class="nn">awstin.config</span> <span class="kn">import</span> <span class="n">aws_config</span>
+<span class="kn">from</span> <span class="nn">awstin.constants</span> <span class="kn">import</span> <span class="n">TEST_DYNAMODB_ENDPOINT</span>
+<span class="kn">from</span> <span class="nn">awstin.dynamodb.utils</span> <span class="kn">import</span> <span class="n">to_decimal</span>
+
+<span class="c1"># Testing parameter to change table listing page size</span>
+<span class="n">_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
+
+
+<div class="viewcode-block" id="DynamoDB"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.DynamoDB">[docs]</a><span class="k">class</span> <span class="nc">DynamoDB</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A client for use of DynamoDB via awstin.</span>
+
+<span class="sd">    Tables are accessed via data models. See documentation for details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeout : float, optional</span>
+<span class="sd">            Timeout for establishing a connection to DynamoDB (default 5.0)</span>
+<span class="sd">        max_retries : int, optional</span>
+<span class="sd">            Max retries for establishing a connection to DynamoDB (default 3)</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        EnvironmentError</span>
+<span class="sd">            If neither the TEST_DYNAMODB_ENDPOINT or AWS_REGION environment</span>
+<span class="sd">            variables are set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span> <span class="o">=</span> <span class="n">max_retries</span>
+
+        <span class="n">test_endpoint</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TEST_DYNAMODB_ENDPOINT</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">aws_config</span><span class="p">(</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+            <span class="n">endpoint</span><span class="o">=</span><span class="n">test_endpoint</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s2">&quot;dynamodb&quot;</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s2">&quot;dynamodb&quot;</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DynamoDB.list_tables"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.DynamoDB.list_tables">[docs]</a>    <span class="k">def</span> <span class="nf">list_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a list of all table names in this DynamoDB instance.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of str</span>
+<span class="sd">            Table names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">list_tables</span><span class="p">(</span><span class="n">Limit</span><span class="o">=</span><span class="n">_PAGE_SIZE</span><span class="p">)</span>
+        <span class="n">tables</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;TableNames&quot;</span><span class="p">]</span>
+
+        <span class="k">while</span> <span class="s2">&quot;LastEvaluatedTableName&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">list_tables</span><span class="p">(</span>
+                <span class="n">Limit</span><span class="o">=</span><span class="n">_PAGE_SIZE</span><span class="p">,</span>
+                <span class="n">ExclusiveStartTableName</span><span class="o">=</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;LastEvaluatedTableName&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">tables</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;TableNames&quot;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">tables</span></div>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Indexed access to DynamoDB tables via Python data models.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Table</span>
+<span class="sd">            the dynamodb table, if it exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_model</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Table"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.Table">[docs]</a><span class="k">class</span> <span class="nc">Table</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interface to a DynamoDB table.</span>
+
+<span class="sd">    Items can be retrieved from the table by a shorthand depending on the</span>
+<span class="sd">    primary key. If it&#39;s only a partition key, items can be retrieved by the</span>
+<span class="sd">    value of the partition key:</span>
+
+<span class="sd">    ``my_table[&quot;hashval&quot;]``</span>
+
+<span class="sd">    If it&#39;s a partition and sort key, items can be retrived by a hashkey,</span>
+<span class="sd">    sortkey tuple:</span>
+
+<span class="sd">    ``my_table[&quot;hashval&quot;, 123]``</span>
+
+<span class="sd">    Items can also be retrieved in a dict-like way:</span>
+
+<span class="sd">    ``my_table[{&quot;HashKeyName&quot;: &quot;hashval&quot;, &quot;SortKeyName&quot;: 123}]``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dynamodb_client</span><span class="p">,</span> <span class="n">data_model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Paramters</span>
+<span class="sd">        ---------</span>
+<span class="sd">        client : DynamoDB</span>
+<span class="sd">            DynamoDB client</span>
+<span class="sd">        data_model : DynamoDB Table</span>
+<span class="sd">            Data model for interfacing with the table&#39;s contents</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_model</span> <span class="o">=</span> <span class="n">data_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">data_model</span><span class="o">.</span><span class="n">_table_name_</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dynamodb</span> <span class="o">=</span> <span class="n">dynamodb_client</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span> <span class="o">=</span> <span class="n">dynamodb_client</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">to_decimal</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">primary_key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">table_description</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamodb</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">describe_table</span><span class="p">(</span>
+                <span class="n">TableName</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="p">(</span><span class="n">partition_key</span><span class="p">,)</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;AttributeName&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">table_description</span><span class="p">[</span><span class="s2">&quot;Table&quot;</span><span class="p">][</span><span class="s2">&quot;KeySchema&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;KeyType&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;HASH&quot;</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="p">(</span><span class="n">sort_key</span><span class="p">,)</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;AttributeName&quot;</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">table_description</span><span class="p">[</span><span class="s2">&quot;Table&quot;</span><span class="p">][</span><span class="s2">&quot;KeySchema&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;KeyType&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;RANGE&quot;</span>
+                <span class="p">]</span>
+                <span class="n">primary_key</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">partition_key</span><span class="p">:</span> <span class="n">to_decimal</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">sort_key</span><span class="p">:</span> <span class="n">to_decimal</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">primary_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">partition_key</span><span class="p">:</span> <span class="n">to_decimal</span><span class="p">(</span><span class="n">key</span><span class="p">)}</span>
+        <span class="k">return</span> <span class="n">primary_key</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get an item, given either a primary key as a dict, or given simply the</span>
+<span class="sd">        value of the partition key if there is no sort key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span>
+            <span class="n">Key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_dynamo_projection</span><span class="p">(),</span>
+        <span class="p">)[</span><span class="s2">&quot;Item&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_from_dynamodb</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Table.put_item"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.Table.put_item">[docs]</a>    <span class="k">def</span> <span class="nf">put_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Direct exposure of put_item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">_to_dynamodb</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Table.update_item"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.Table.update_item">[docs]</a>    <span class="k">def</span> <span class="nf">update_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">update_expression</span><span class="p">,</span> <span class="n">condition_expression</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update an item in the table given an awstin update expression.</span>
+
+<span class="sd">        Can optionally have a condition expression.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ---------</span>
+<span class="sd">        key : Any</span>
+<span class="sd">            Primary key, specified in any valid way</span>
+<span class="sd">        update_expression : awstin.dynamodb.orm.UpdateOperator</span>
+<span class="sd">            Update expression. See docs for construction.</span>
+<span class="sd">        condition_expression : Query, optional</span>
+<span class="sd">            Optional condition expression</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DynamoModel or None</span>
+<span class="sd">            Updated model, or None if the condition expression fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">boto_query</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">Key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_key</span><span class="p">(</span><span class="n">key</span><span class="p">),</span>
+            <span class="n">ReturnValues</span><span class="o">=</span><span class="s2">&quot;ALL_NEW&quot;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">update_expression</span><span class="o">.</span><span class="n">serialize</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">condition_expression</span><span class="p">:</span>
+            <span class="n">boto_query</span><span class="p">[</span><span class="s2">&quot;ConditionExpression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">condition_expression</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">update_item</span><span class="p">(</span><span class="o">**</span><span class="n">boto_query</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;ConditionalCheckFailedException&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_from_dynamodb</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;Attributes&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Table.delete_item"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.Table.delete_item">[docs]</a>    <span class="k">def</span> <span class="nf">delete_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">condition_expression</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete an item, given either a primary key as a dict, or given simply</span>
+<span class="sd">        the value of the partition key if there is no sort key</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the delete, False if the condition was not satisfied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_primary_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">condition_kwargs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;ConditionExpression&quot;</span><span class="p">:</span> <span class="n">condition_expression</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">condition_expression</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span>
+                <span class="n">Key</span><span class="o">=</span><span class="n">primary_key</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">condition_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;ConditionalCheckFailedException&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Table.scan"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.Table.scan">[docs]</a>    <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scan_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate all items in the table, one at a time.</span>
+
+<span class="sd">        Lazily queries for more items if needed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scan_filter : Query</span>
+<span class="sd">            An optional query constructed with awstin&#39;s query framework</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        DynamoModel</span>
+<span class="sd">            an item in the table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filter_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">scan_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filter_kwargs</span><span class="p">[</span><span class="s2">&quot;FilterExpression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scan_filter</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">filter_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_from_dynamodb</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;Items&quot;</span><span class="p">]]</span>
+        <span class="k">yield from</span> <span class="n">items</span>
+
+        <span class="k">while</span> <span class="s2">&quot;LastEvaluatedKey&quot;</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+                <span class="n">ExclusiveStartKey</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;LastEvaluatedKey&quot;</span><span class="p">],</span>
+                <span class="o">**</span><span class="n">filter_kwargs</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_from_dynamodb</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;Items&quot;</span><span class="p">]]</span>
+            <span class="k">yield from</span> <span class="n">items</span></div>
+
+<div class="viewcode-block" id="Table.query"><a class="viewcode-back" href="../../../api/awstin.api.dynamodb.html#awstin.dynamodb.Table.query">[docs]</a>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_expression</span><span class="p">,</span> <span class="n">filter_expression</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">query_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">query_kwargs</span><span class="p">[</span><span class="s2">&quot;KeyConditionExpression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">query_expression</span>
+        <span class="k">if</span> <span class="n">filter_expression</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query_kwargs</span><span class="p">[</span><span class="s2">&quot;FilterExpression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">filter_expression</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">query_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_from_dynamodb</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;Items&quot;</span><span class="p">]]</span>
+        <span class="k">yield from</span> <span class="n">items</span>
+
+        <span class="k">while</span> <span class="s2">&quot;LastEvaluatedKey&quot;</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boto3_table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+                <span class="n">ExclusiveStartKey</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;LastEvaluatedKey&quot;</span><span class="p">],</span>
+                <span class="o">**</span><span class="n">query_kwargs</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data_model</span><span class="o">.</span><span class="n">_from_dynamodb</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;Items&quot;</span><span class="p">]]</span>
+            <span class="k">yield from</span> <span class="n">items</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">awstin</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.apigateway.html">awstin.apigateway package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.awslambda.html">awstin.awslambda package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.dynamodb.html">awstin.dynamodb package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.sns.html">awstin.sns package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Kevin Duff.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

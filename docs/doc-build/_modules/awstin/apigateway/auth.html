@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>awstin.apigateway.auth &#8212; awstin 0.0.17 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for awstin.apigateway.auth</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="accept"><a class="viewcode-back" href="../../../api/awstin.api.apigateway.html#awstin.apigateway.auth.accept">[docs]</a><span></span><span class="k">def</span> <span class="nf">accept</span><span class="p">(</span><span class="n">principal_id</span><span class="p">,</span> <span class="n">resource_arn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an auth lambda response granting access to the given resource ARN</span>
+<span class="sd">    to the given principle ID.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    principal_id : str</span>
+<span class="sd">        The principal ID to grant access to</span>
+<span class="sd">    resource_arn : str</span>
+<span class="sd">        The ARN of the resource to grant access to</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Auth lambda response</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_auth_response</span><span class="p">(</span><span class="n">principal_id</span><span class="p">,</span> <span class="n">resource_arn</span><span class="p">,</span> <span class="s2">&quot;Allow&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="reject"><a class="viewcode-back" href="../../../api/awstin.api.apigateway.html#awstin.apigateway.auth.reject">[docs]</a><span class="k">def</span> <span class="nf">reject</span><span class="p">(</span><span class="n">principal_id</span><span class="p">,</span> <span class="n">resource_arn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an auth lambda response rejecting access to the given resource ARN</span>
+<span class="sd">    to the given principle ID.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    principal_id : str</span>
+<span class="sd">        The principal ID to reject access to</span>
+<span class="sd">    resource_arn : str</span>
+<span class="sd">        The ARN of the resource to reject access to</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Auth lambda response</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_auth_response</span><span class="p">(</span><span class="n">principal_id</span><span class="p">,</span> <span class="n">resource_arn</span><span class="p">,</span> <span class="s2">&quot;Deny&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="unauthorized"><a class="viewcode-back" href="../../../api/awstin.api.apigateway.html#awstin.apigateway.auth.unauthorized">[docs]</a><span class="k">def</span> <span class="nf">unauthorized</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="s2">&quot;Unauthorized&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an auth lambda response indicating the requester is unauthorized.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    body : str, optional</span>
+<span class="sd">        Optional resposnse body. Default &quot;Unauthorized&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Auth lambda response</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;statusCode&quot;</span><span class="p">:</span> <span class="mi">401</span><span class="p">,</span>
+        <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="invalid"><a class="viewcode-back" href="../../../api/awstin.api.apigateway.html#awstin.apigateway.auth.invalid">[docs]</a><span class="k">def</span> <span class="nf">invalid</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="s2">&quot;Invalid&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an auth lambda response indicating the request is invalid.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    body : str, optional</span>
+<span class="sd">        Optional resposnse body. Default &quot;Invalid&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Auth lambda response</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;statusCode&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<span class="k">def</span> <span class="nf">_auth_response</span><span class="p">(</span><span class="n">principal_id</span><span class="p">,</span> <span class="n">resource_arn</span><span class="p">,</span> <span class="n">effect</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;principalId&quot;</span><span class="p">:</span> <span class="n">principal_id</span><span class="p">,</span>
+        <span class="s2">&quot;policyDocument&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;Version&quot;</span><span class="p">:</span> <span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Statement&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;Action&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="s2">&quot;execute-api:Invoke&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;Effect&quot;</span><span class="p">:</span> <span class="n">effect</span><span class="p">,</span>
+                    <span class="s2">&quot;Resource&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">resource_arn</span><span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">awstin</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.apigateway.html">awstin.apigateway package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.awslambda.html">awstin.awslambda package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.dynamodb.html">awstin.dynamodb package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/awstin.api.sns.html">awstin.sns package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Kevin Duff.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -11,7 +11,7 @@ API Documentation
 .. toctree::
    :maxdepth: 4
 
-   awstin.api.apigateway
-   awstin.api.awslambda
-   awstin.api.dynamodb
-   awstin.api.sns
+   api/awstin.api.apigateway
+   api/awstin.api.awslambda
+   api/awstin.api.dynamodb
+   api/awstin.api.sns

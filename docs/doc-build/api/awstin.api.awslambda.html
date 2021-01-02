@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>awstin.awslambda package &#8212; awstin 0.0.17 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="awstin-awslambda-package">
+<h1>awstin.awslambda package<a class="headerlink" href="#awstin-awslambda-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-awstin.awslambda">
+<span id="awstin-awslambda-module"></span><h2>awstin.awslambda module<a class="headerlink" href="#module-awstin.awslambda" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="awstin.awslambda.lambda_handler">
+<code class="sig-prename descclassname">awstin.awslambda.</code><code class="sig-name descname">lambda_handler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/awslambda/api.html#lambda_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.awslambda.lambda_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator factory for wrapping a lambda handler in a boilerplate event
+logger and parser.</p>
+<p>The wrapped function is on the returned function’s <cite>inner</cite> attribute in
+order to be available for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>event_parser</strong> (<em>callable</em>) – Parser of a lambda handler input. Should take as an input the event and
+context as (dict, dict), and return a list of arguments that the
+wrapped handler should use.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>handler</strong> – Decorator for the Lambda handler, accepting a LambdaEvent. It logs
+the raw incoming event and the result.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">awstin</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Kevin Duff.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api/awstin.api.awslambda.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

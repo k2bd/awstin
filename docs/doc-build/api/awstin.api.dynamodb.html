@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>awstin.dynamodb package &#8212; awstin 0.0.17 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="awstin-dynamodb-package">
+<h1>awstin.dynamodb package<a class="headerlink" href="#awstin-dynamodb-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-awstin.dynamodb">
+<span id="awstin-dynamodb-module"></span><h2>awstin.dynamodb module<a class="headerlink" href="#module-awstin.dynamodb" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="awstin.dynamodb.Attr">
+<em class="property">class </em><code class="sig-prename descclassname">awstin.dynamodb.</code><code class="sig-name descname">Attr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attribute_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/orm.html#Attr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">awstin.dynamodb.orm.BaseAttribute</span></code></p>
+<p>Used to define and query non-key attributes on a dynamodb table data model</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="awstin.dynamodb.DynamoDB">
+<em class="property">class </em><code class="sig-prename descclassname">awstin.dynamodb.</code><code class="sig-name descname">DynamoDB</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">5.0</span></em>, <em class="sig-param"><span class="n">max_retries</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#DynamoDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.DynamoDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A client for use of DynamoDB via awstin.</p>
+<p>Tables are accessed via data models. See documentation for details.</p>
+<dl class="py method">
+<dt id="awstin.dynamodb.DynamoDB.list_tables">
+<code class="sig-name descname">list_tables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#DynamoDB.list_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.DynamoDB.list_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all table names in this DynamoDB instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Table names</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="awstin.dynamodb.DynamoModel">
+<em class="property">class </em><code class="sig-prename descclassname">awstin.dynamodb.</code><code class="sig-name descname">DynamoModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/orm.html#DynamoModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.DynamoModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Abstract class for defining DynamoDB data models.</p>
+<p>For example:
+<a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>python
+class MyDataModel(DynamoModel):</p>
+<blockquote>
+<div><p>_table_name_ = “MyTable”</p>
+<p>hashkey_name = HashKey()</p>
+<p># The name of the DynamoDB attribute differs from the
+# name on the data model
+sortkey = SortKey(“sortkeyName”)</p>
+<p>an_attribute = Attr()</p>
+<p>another_attribute = Attr(“attributeName”)</p>
+</div></blockquote>
+<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="awstin.dynamodb.Key">
+<em class="property">class </em><code class="sig-prename descclassname">awstin.dynamodb.</code><code class="sig-name descname">Key</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attribute_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/orm.html#Key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">awstin.dynamodb.orm.BaseAttribute</span></code></p>
+<p>Used to define and query hash and sort key attributes on a dynamodb table
+data model</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="awstin.dynamodb.Table">
+<em class="property">class </em><code class="sig-prename descclassname">awstin.dynamodb.</code><code class="sig-name descname">Table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dynamodb_client</span></em>, <em class="sig-param"><span class="n">data_model</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Interface to a DynamoDB table.</p>
+<p>Items can be retrieved from the table by a shorthand depending on the
+primary key. If it’s only a partition key, items can be retrieved by the
+value of the partition key:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_table[&quot;hashval&quot;]</span></code></p>
+<p>If it’s a partition and sort key, items can be retrived by a hashkey,
+sortkey tuple:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_table[&quot;hashval&quot;,</span> <span class="pre">123]</span></code></p>
+<p>Items can also be retrieved in a dict-like way:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_table[{&quot;HashKeyName&quot;:</span> <span class="pre">&quot;hashval&quot;,</span> <span class="pre">&quot;SortKeyName&quot;:</span> <span class="pre">123}]</span></code></p>
+<dl class="py method">
+<dt id="awstin.dynamodb.Table.delete_item">
+<code class="sig-name descname">delete_item</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">condition_expression</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#Table.delete_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Table.delete_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete an item, given either a primary key as a dict, or given simply
+the value of the partition key if there is no sort key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if the delete, False if the condition was not satisfied</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="awstin.dynamodb.Table.put_item">
+<code class="sig-name descname">put_item</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#Table.put_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Table.put_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Direct exposure of put_item</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="awstin.dynamodb.Table.query">
+<code class="sig-name descname">query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_expression</span></em>, <em class="sig-param"><span class="n">filter_expression</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#Table.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Table.query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="awstin.dynamodb.Table.scan">
+<code class="sig-name descname">scan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scan_filter</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#Table.scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Table.scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate all items in the table, one at a time.</p>
+<p>Lazily queries for more items if needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scan_filter</strong> (<em>Query</em>) – An optional query constructed with awstin’s query framework</p>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p><em>DynamoModel</em> – an item in the table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="awstin.dynamodb.Table.update_item">
+<code class="sig-name descname">update_item</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">update_expression</span></em>, <em class="sig-param"><span class="n">condition_expression</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/table.html#Table.update_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.Table.update_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update an item in the table given an awstin update expression.</p>
+<p>Can optionally have a condition expression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>Any</em>) – Primary key, specified in any valid way</p></li>
+<li><p><strong>update_expression</strong> (<em>awstin.dynamodb.orm.UpdateOperator</em>) – Update expression. See docs for construction.</p></li>
+<li><p><strong>condition_expression</strong> (<em>Query</em><em>, </em><em>optional</em>) – Optional condition expression</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Updated model, or None if the condition expression fails</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#awstin.dynamodb.DynamoModel" title="awstin.dynamodb.DynamoModel">DynamoModel</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="awstin-dynamodb-testing-module">
+<h2>awstin.dynamodb.testing module<a class="headerlink" href="#awstin-dynamodb-testing-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-awstin.dynamodb.testing"></span><dl class="py function">
+<dt id="awstin.dynamodb.testing.temporary_dynamodb_table">
+<code class="sig-prename descclassname">awstin.dynamodb.testing.</code><code class="sig-name descname">temporary_dynamodb_table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_model</span></em>, <em class="sig-param"><span class="n">hashkey_name</span></em>, <em class="sig-param"><span class="n">hashkey_type</span><span class="o">=</span><span class="default_value">'S'</span></em>, <em class="sig-param"><span class="n">sortkey_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sortkey_type</span><span class="o">=</span><span class="default_value">'S'</span></em>, <em class="sig-param"><span class="n">delay</span><span class="o">=</span><span class="default_value">5.0</span></em>, <em class="sig-param"><span class="n">max_attempts</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">extra_attributes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">extra_kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/awstin/dynamodb/testing.html#temporary_dynamodb_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#awstin.dynamodb.testing.temporary_dynamodb_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Context manager creating a temporary DynamoDB table for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_model</strong> (<a class="reference internal" href="#awstin.dynamodb.DynamoModel" title="awstin.dynamodb.DynamoModel"><em>DynamoModel</em></a>) – Model to interface with this table</p></li>
+<li><p><strong>hashkey_name</strong> (<em>str</em>) – Name of the hash key of the table</p></li>
+<li><p><strong>hashkey_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of the hash key (“S”, “N”, or “B”). Default “S”</p></li>
+<li><p><strong>sortkey_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Optional sort key for the temporary table</p></li>
+<li><p><strong>sortkey_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of the sort key if there is one (“S”, “N”, or “B”). Default “S”</p></li>
+<li><p><strong>delay</strong> (<em>float</em><em>, </em><em>optional</em>) – Delay in seconds between checks if the table exists</p></li>
+<li><p><strong>max_attempts</strong> (<em>int</em><em>, </em><em>optional</em>) – Max number of attempts to check if the table exists, after which the
+client gives up.</p></li>
+<li><p><strong>extra_attributes</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional attribute definitions to add to create_table</p></li>
+<li><p><strong>**extra_kwargs</strong> (<em>dict</em>) – Additional keyword arguments will be passed to create_table</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">awstin</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Kevin Duff.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api/awstin.api.dynamodb.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

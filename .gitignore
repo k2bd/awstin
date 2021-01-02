@@ -4,7 +4,7 @@ playground/
 *.DS_Store
 
 # Docs
-docs/sphinx/_build
+*/_build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
