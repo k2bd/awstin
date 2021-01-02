@@ -482,7 +482,7 @@ class RemoveOperator(UpdateOperator):
         serialized_attr = itemize_attr(self.attr)
 
         return {
-            "REMOVE": [serialized_attr['UpdateExpression']],
+            "REMOVE": [serialized_attr["UpdateExpression"]],
             "ExpressionAttributeNames": serialized_attr["ExpressionAttributeNames"],
             "ExpressionAttributeValues": {},
         }
