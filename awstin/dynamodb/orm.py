@@ -263,26 +263,22 @@ class DynamoModelMeta(type):
 
 class DynamoModel(metaclass=DynamoModelMeta):
     """
-    Abstract class for defining DynamoDB data models.
+    Class defining an ORM model for a DynamoDB table.
 
-    For example:
-    ```python
-    class MyDataModel(DynamoModel):
-        _table_name_ = "MyTable"
+    Subclasses must have a ``_table_name_`` attribute. Attributes making up
+    the data model should be Attr or Key instances.
 
-        hashkey_name = HashKey()
-
-        # The name of the DynamoDB attribute differs from the
-        # name on the data model
-        sortkey = SortKey("sortkeyName")
-
-        an_attribute = Attr()
-
-        another_attribute = Attr("attributeName")
-    ```
+    Subclasses representing indexes should also have an ``_index_name_``
+    attribute
     """
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        **kwargs : dict of (str, Any)
+            Initialization of Attr and Key attributes.
+        """
         model_attrs = type(self)._dynamodb_attributes().values()
 
         for name in model_attrs:
@@ -295,7 +291,21 @@ class DynamoModel(metaclass=DynamoModelMeta):
             setattr(self, name, value)
 
     @classmethod
-    def _from_dynamodb(cls, data):
+    def deserialize(cls, data):
+        """
+        Deserialize JSON into a DynamoModel subclass. Internally converts
+        Decimal to float in the deserialization.
+
+        Parameters
+        ----------
+        data : dict of (str, Any)
+            Serialized model
+
+        Returns
+        -------
+        DynamoModel
+            The deserialized data model
+        """
         model_attrs = cls._dynamodb_attributes()
 
         result = cls()
@@ -315,7 +325,16 @@ class DynamoModel(metaclass=DynamoModelMeta):
 
         return result
 
-    def _to_dynamodb(self):
+    def serialize(self):
+        """
+        Serialize a DynamoModel subclass to JSON that can be inserted into
+        DynamoDB. Internally converts float to Decimal.
+
+        Returns
+        -------
+        dict of (str, Any)
+            The serialized JSON entry
+        """
         model_attrs = type(self)._dynamodb_attributes()
 
         result = {}

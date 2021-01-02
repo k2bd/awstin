@@ -19,6 +19,9 @@ def temporary_dynamodb_table(
     """
     Context manager creating a temporary DynamoDB table for testing.
 
+    Ensures that the table is created and destroyed before entering and exiting
+    the context.
+
     Parameters
     ----------
     data_model : DynamoModel
@@ -37,9 +40,9 @@ def temporary_dynamodb_table(
         Max number of attempts to check if the table exists, after which the
         client gives up.
     extra_attributes : dict, optional
-        Additional attribute definitions to add to create_table
+        Additional attribute definitions (boto3 specification)
     **extra_kwargs : dict
-        Additional keyword arguments will be passed to create_table
+        Additional keyword arguments to pass to create_table
     """
     # TODO: make filter more specific
     warnings.simplefilter("ignore", ResourceWarning)

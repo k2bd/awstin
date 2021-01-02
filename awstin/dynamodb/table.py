@@ -145,19 +145,30 @@ class Table:
         """
         Get an item, given either a primary key as a dict, or given simply the
         value of the partition key if there is no sort key
+
+        Parameters
+        ----------
+        key : Any
+            Primary key, specified as a hash key value, composite key tuple, or
+            a dict
         """
         primary_key = self._get_primary_key(key)
         item = self._boto3_table.get_item(
             Key=primary_key,
             **self.data_model._dynamo_projection(),
         )["Item"]
-        return self.data_model._from_dynamodb(item)
+        return self.data_model.deserialize(item)
 
     def put_item(self, item):
         """
-        Direct exposure of put_item
+        Put an item in the table
+
+        Parameters
+        ----------
+        item : DynamoModel
+            The item to put in the table
         """
-        data = item._to_dynamodb()
+        data = item.serialize()
         return self._boto3_table.put_item(Item=data)
 
     def update_item(self, key, update_expression, condition_expression=None):
@@ -169,7 +180,8 @@ class Table:
         Parameters
         ---------
         key : Any
-            Primary key, specified in any valid way
+            Primary key, specified as a hash key value, composite key tuple, or
+            a dict
         update_expression : awstin.dynamodb.orm.UpdateOperator
             Update expression. See docs for construction.
         condition_expression : Query, optional
@@ -197,17 +209,31 @@ class Table:
             else:
                 raise e
 
-        return self.data_model._from_dynamodb(result["Attributes"])
+        return self.data_model.deserialize(result["Attributes"])
 
     def delete_item(self, key, condition_expression=None):
         """
         Delete an item, given either a primary key as a dict, or given simply
         the value of the partition key if there is no sort key
 
+        Parameters
+        ----------
+        key : Any
+            Primary key of the entry to delete, specified as a hash key value,
+            composite key tuple, or a dict
+        condition_expression : Query, optional
+            Optional condition expression for the delete, intended to make the
+            operation idempotent
+
         Returns
         -------
-        bool
+        deleted : bool
             True if the delete, False if the condition was not satisfied
+
+        Raises
+        ------
+        botocore.exceptions.ClientError
+            If there's an error in the request.
         """
         primary_key = self._get_primary_key(key)
         condition_kwargs = (
@@ -230,9 +256,8 @@ class Table:
 
     def scan(self, scan_filter=None):
         """
-        Generate all items in the table, one at a time.
-
-        Lazily queries for more items if needed.
+        Yield items in from the table, optionally matching the given filter
+        expression. Lazily paginates items internally.
 
         Parameters
         ----------
@@ -241,8 +266,8 @@ class Table:
 
         Yields
         ------
-        DynamoModel
-            an item in the table
+        item : DynamoModel
+            An item in the table matching the filter
         """
         filter_kwargs = {}
 
@@ -253,7 +278,7 @@ class Table:
             **filter_kwargs,
             **self.data_model._get_kwargs(),
         )
-        items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+        items = [self.data_model.deserialize(item) for item in results["Items"]]
         yield from items
 
         while "LastEvaluatedKey" in results:
@@ -262,10 +287,27 @@ class Table:
                 **filter_kwargs,
                 **self.data_model._get_kwargs(),
             )
-            items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+            items = [self.data_model.deserialize(item) for item in results["Items"]]
             yield from items
 
     def query(self, query_expression, filter_expression=None):
+        """
+        Yield items from the table matching some query expression and optional
+        filter expression. Lazily paginates items internally.
+
+        Parameters
+        ----------
+        query_expression : Query
+            A Key query constructed with awstin's query syntax
+        filter_expression : Query
+            An additional post-query filter expression constructed with
+            awstin's query syntax
+
+        Yields
+        ------
+        item : DynamoModel
+            An item in the table matching thw query
+        """
         query_kwargs = {}
 
         query_kwargs["KeyConditionExpression"] = query_expression
@@ -276,7 +318,7 @@ class Table:
             **query_kwargs,
             **self.data_model._get_kwargs(),
         )
-        items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+        items = [self.data_model.deserialize(item) for item in results["Items"]]
         yield from items
 
         while "LastEvaluatedKey" in results:
@@ -285,5 +327,5 @@ class Table:
                 **query_kwargs,
                 **self.data_model._get_kwargs(),
             )
-            items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+            items = [self.data_model.deserialize(item) for item in results["Items"]]
             yield from items
