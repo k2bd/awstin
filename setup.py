@@ -1,4 +1,6 @@
 import setuptools
+from awstin import __version__
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -7,7 +9,7 @@ description = "Utilities for building and testing AWS applications in Python"
 
 setuptools.setup(
     name="awstin",
-    version="0.0.18",
+    version=__version__,
     author="Kevin Duff",
     description=description,
     long_description=long_description,
@@ -21,7 +23,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Intended Audience :: Developers",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
     install_requires=[
         "boto3",
     ],

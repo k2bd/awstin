@@ -263,23 +263,7 @@ class DynamoModelMeta(type):
 
 class DynamoModel(metaclass=DynamoModelMeta):
     """
-    Abstract class for defining DynamoDB data models.
-
-    For example:
-    ```python
-    class MyDataModel(DynamoModel):
-        _table_name_ = "MyTable"
-
-        hashkey_name = HashKey()
-
-        # The name of the DynamoDB attribute differs from the
-        # name on the data model
-        sortkey = SortKey("sortkeyName")
-
-        an_attribute = Attr()
-
-        another_attribute = Attr("attributeName")
-    ```
+    Class defining an ORM model for a DynamoDB table.
     """
 
     def __init__(self, **kwargs):
@@ -295,7 +279,21 @@ class DynamoModel(metaclass=DynamoModelMeta):
             setattr(self, name, value)
 
     @classmethod
-    def _from_dynamodb(cls, data):
+    def deserialize(cls, data):
+        """
+        Deserialize JSON into a DynamoModel subclass. Internally converts
+        Decimal to float in the deserialization.
+
+        Parameters
+        ----------
+        data : dict of (str, Any)
+            Serialized model
+
+        Returns
+        -------
+        DynamoModel
+            The deserialized data model
+        """
         model_attrs = cls._dynamodb_attributes()
 
         result = cls()
@@ -315,7 +313,16 @@ class DynamoModel(metaclass=DynamoModelMeta):
 
         return result
 
-    def _to_dynamodb(self):
+    def serialize(self):
+        """
+        Serialize a DynamoModel subclass to JSON that can be inserted into
+        DynamoDB. Internally converts float to Decimal.
+
+        Returns
+        -------
+        dict of (str, Any)
+            The serialized JSON entry
+        """
         model_attrs = type(self)._dynamodb_attributes()
 
         result = {}

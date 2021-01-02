@@ -151,13 +151,13 @@ class Table:
             Key=primary_key,
             **self.data_model._dynamo_projection(),
         )["Item"]
-        return self.data_model._from_dynamodb(item)
+        return self.data_model.deserialize(item)
 
     def put_item(self, item):
         """
         Direct exposure of put_item
         """
-        data = item._to_dynamodb()
+        data = item.serialize()
         return self._boto3_table.put_item(Item=data)
 
     def update_item(self, key, update_expression, condition_expression=None):
@@ -197,7 +197,7 @@ class Table:
             else:
                 raise e
 
-        return self.data_model._from_dynamodb(result["Attributes"])
+        return self.data_model.deserialize(result["Attributes"])
 
     def delete_item(self, key, condition_expression=None):
         """
@@ -253,7 +253,7 @@ class Table:
             **filter_kwargs,
             **self.data_model._get_kwargs(),
         )
-        items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+        items = [self.data_model.deserialize(item) for item in results["Items"]]
         yield from items
 
         while "LastEvaluatedKey" in results:
@@ -262,7 +262,7 @@ class Table:
                 **filter_kwargs,
                 **self.data_model._get_kwargs(),
             )
-            items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+            items = [self.data_model.deserialize(item) for item in results["Items"]]
             yield from items
 
     def query(self, query_expression, filter_expression=None):
@@ -276,7 +276,7 @@ class Table:
             **query_kwargs,
             **self.data_model._get_kwargs(),
         )
-        items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+        items = [self.data_model.deserialize(item) for item in results["Items"]]
         yield from items
 
         while "LastEvaluatedKey" in results:
@@ -285,5 +285,5 @@ class Table:
                 **query_kwargs,
                 **self.data_model._get_kwargs(),
             )
-            items = [self.data_model._from_dynamodb(item) for item in results["Items"]]
+            items = [self.data_model.deserialize(item) for item in results["Items"]]
             yield from items

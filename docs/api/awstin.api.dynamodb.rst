@@ -10,7 +10,7 @@ awstin.dynamodb module
    :show-inheritance:
 
 awstin.dynamodb.testing module
---------------------------
+------------------------------
 
 .. automodule:: awstin.dynamodb.testing
    :members:
