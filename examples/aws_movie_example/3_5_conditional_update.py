@@ -19,6 +19,6 @@ if __name__ == '__main__':
     update_response = remove_actors("The Big New Movie", 2015, 3)
     if update_response:
         print("Updated")
-        print(update_response.__dict__)
+        print(update_response.serialize())
     else:
         print("Not Updated")

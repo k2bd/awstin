@@ -17,4 +17,4 @@ if __name__ == '__main__':
     if movie:
         print("Get movie succeeded:")
         print(type(movie))
-        print(movie.__dict__)
+        print(movie.serialize())
