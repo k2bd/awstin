@@ -212,7 +212,8 @@ class Table:
         primary_key = self._get_primary_key(key)
         condition_kwargs = (
             {"ConditionExpression": condition_expression}
-            if condition_expression is not None else {}
+            if condition_expression is not None
+            else {}
         )
 
         try:

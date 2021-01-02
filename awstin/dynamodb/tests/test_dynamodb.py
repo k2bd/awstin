@@ -688,10 +688,7 @@ class TestDynamoDB(unittest.TestCase):
 
     def test_filter_size(self):
         with self.table_without_sortkey as table:
-            hit = ModelWithoutSortkey(
-                hashkey="interesting",
-                another_attr=[1, 2, 3, 4]
-            )
+            hit = ModelWithoutSortkey(hashkey="interesting", another_attr=[1, 2, 3, 4])
             miss = ModelWithoutSortkey(
                 hashkey="typewriter",
                 another_attr=[1, 2, 3],

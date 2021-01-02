@@ -143,10 +143,9 @@ class TestUpdateItem(unittest.TestCase):
 
     def test_update_set_nested_to_nested_complex(self):
         # Pepper in some reserved keywords as well to test
-        update_expression = (
-            MyModel.an_attr[1].name.set(MyModel.another_attr.BINARY[1])
-            & MyModel.another_attr.CASCADE[0].set(MyModel.an_attr[0].atomic)
-        )
+        update_expression = MyModel.an_attr[1].name.set(
+            MyModel.another_attr.BINARY[1]
+        ) & MyModel.another_attr.CASCADE[0].set(MyModel.an_attr[0].atomic)
 
         with self.temp_table as table:
             item = MyModel(
