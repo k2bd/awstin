@@ -82,22 +82,21 @@ class Table:
     """
     Interface to a DynamoDB table.
 
-    Items can be retrieved in a dict-like way:
-    ```
-    DynamoDB()[TableModel][{"HashKeyName": "hashval", "SortKeyName": 123}]
-    ```
-
-    Items can also be retrieved from the table by a shorthand depending on the
+    Items can be retrieved from the table by a shorthand depending on the
     primary key. If it's only a partition key, items can be retrieved by the
     value of the partition key:
-    ```
-    DynamoDB()[TableModel]["hashval"]
-    ```
+
+    ``my_table["hashval"]``
+
     If it's a partition and sort key, items can be retrived by a hashkey,
     sortkey tuple:
-    ```
-    DynamoDB()[TableModel][("hashval", 123)]
-    ```
+
+    ``my_table["hashval", 123]``
+
+    Items can also be retrieved in a dict-like way:
+
+    ``my_table[{"HashKeyName": "hashval", "SortKeyName": 123}]``
+
     """
 
     def __init__(self, dynamodb_client, data_model):
@@ -200,13 +199,34 @@ class Table:
 
         return self.data_model._from_dynamodb(result["Attributes"])
 
-    def delete_item(self, key):
+    def delete_item(self, key, condition_expression=None):
         """
         Delete an item, given either a primary key as a dict, or given simply
         the value of the partition key if there is no sort key
+
+        Returns
+        -------
+        bool
+            True if the delete, False if the condition was not satisfied
         """
         primary_key = self._get_primary_key(key)
-        self._boto3_table.delete_item(Key=primary_key)
+        condition_kwargs = (
+            {"ConditionExpression": condition_expression}
+            if condition_expression is not None
+            else {}
+        )
+
+        try:
+            self._boto3_table.delete_item(
+                Key=primary_key,
+                **condition_kwargs,
+            )
+            return True
+        except ClientError as e:
+            if "ConditionalCheckFailedException" in str(e):
+                return False
+            else:
+                raise e
 
     def scan(self, scan_filter=None):
         """
