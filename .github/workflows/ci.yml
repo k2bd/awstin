@@ -37,6 +37,7 @@ jobs:
     - name: Build docs
       uses: ammaraskar/sphinx-action@master
       with:
+        pre-build-command: "pip install ."
         docs-folder: "docs/"
     - name: Lint with flake8
       run: |
