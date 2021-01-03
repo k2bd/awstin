@@ -1,6 +1,6 @@
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def get_movie(title, year):
@@ -12,9 +12,9 @@ def get_movie(title, year):
     return item
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     movie = get_movie("The Big New Movie", 2015)
     if movie:
         print("Get movie succeeded:")
         print(type(movie))
-        print(movie.__dict__)
+        print(movie.serialize())

@@ -1,6 +1,6 @@
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def delete_underrated_movie(title, year, rating):
@@ -13,7 +13,7 @@ def delete_underrated_movie(title, year, rating):
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Attempting a conditional delete...")
     deleted = delete_underrated_movie("The Big New Movie", 2015, 5)
     if deleted:

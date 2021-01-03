@@ -26,6 +26,13 @@ NOT_SET = NotSet()
 
 class BaseAttribute:
     def __init__(self, attribute_name: Union[str, None] = None):
+        """
+        Parameters
+        ----------
+        attribute_name : str, optional
+            Name of the property in the DynamoDB table. Defaults to the name of
+            the attribute on the DynamoModel class.
+        """
         # Set by user
         self._attribute_name = attribute_name
 
@@ -150,22 +157,57 @@ class BaseAttribute:
 
     def size(self):
         """
-        Size of a collection
+        Filter by size of a collection
         """
         return Size(self._awstin_name)
 
     # --- Update expressions ---
 
     def set(self, expression):
+        """
+        Set an attribute to a new value.
+        Corresponds to SET as part of the update expression in
+        ``Table.update_item``.
+
+        Parameters
+        ----------
+        expression : UpdateOperand
+            New value, or an expression defining a new value
+        """
         return SetOperator(self, UpdateOperand(expression))
 
     def remove(self):
+        """
+        Remove an attribute.
+        Corresponds to REMOVE as part of the update expression in
+        ``Table.update_item``.
+        """
         return RemoveOperator(self)
 
     def add(self, expression):
+        """
+        Add to an attribute (numerical add or addition to a set).
+        Corresponds to ADD as part of the update expression in
+        ``Table.update_item``.
+
+        Parameters
+        ----------
+        expression : UpdateOperand
+            Value to add
+        """
         return AddOperator(self, UpdateOperand(expression))
 
     def delete(self, expression):
+        """
+        Delete part of a set attribute.
+        Corresponds to DELETE as part of the update expression in
+        ``Table.update_item``.
+
+        Parameters
+        ----------
+        expression : UpdateOperand
+            Value to delete
+        """
         return DeleteOperator(self, UpdateOperand(expression))
 
     def __add__(self, other):

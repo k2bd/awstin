@@ -3,7 +3,14 @@ awstin package
 
 User Documentation
 ------------------
-TODO
+.. toctree::
+   :maxdepth: 2
+
+   user/apigateway/index
+   user/awslambda/index
+   user/dynamodb/index
+   user/sns/index
+
 
 API Documentation
 -----------------

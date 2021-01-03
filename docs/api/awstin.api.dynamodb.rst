@@ -8,6 +8,7 @@ awstin.dynamodb module
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
 
 awstin.dynamodb.testing module
 ------------------------------
