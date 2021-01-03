@@ -1,6 +1,6 @@
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def scan_movies(year_range, display_movies):
@@ -10,7 +10,8 @@ def scan_movies(year_range, display_movies):
     display_movies(table.scan(Movie.year.between(*year_range)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def print_movies(movies):
         for movie in movies:
             print(f"{movie.year} : {movie.title}")

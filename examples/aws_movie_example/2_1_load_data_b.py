@@ -1,8 +1,8 @@
 import json
 
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def load_movies(movies):
