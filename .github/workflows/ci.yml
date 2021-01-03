@@ -37,9 +37,9 @@ jobs:
     - name: Lint
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 awstin docs examples --count --show-source --statistics
-        black --check awstin docs examples
-        isort --check awstin docs examples
+        flake8 . --count --show-source --statistics
+        black --check .
+        isort --check .
     - name: Build docs
       uses: ammaraskar/sphinx-action@master
       with:

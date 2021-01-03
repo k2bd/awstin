@@ -1,6 +1,6 @@
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def get_movie(title, year):

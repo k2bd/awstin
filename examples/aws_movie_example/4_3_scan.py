@@ -1,6 +1,6 @@
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def scan_movies(year_range, display_movies):

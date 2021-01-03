@@ -1,6 +1,6 @@
-from awstin.dynamodb import DynamoDB
-
 from models import Movie
+
+from awstin.dynamodb import DynamoDB
 
 
 def increase_rating(title, year, rating_increase):
