@@ -19,9 +19,13 @@ def update_movie(title, year, rating, plot, actors):
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     update_response = update_movie(
-        "The Big New Movie", 2015, 5.5, "Everything happens all at once.",
-        ["Larry", "Moe", "Curly"])
+        "The Big New Movie",
+        2015,
+        5.5,
+        "Everything happens all at once.",
+        ["Larry", "Moe", "Curly"],
+    )
     print("Update movie succeeded:")
     print(update_response.serialize())

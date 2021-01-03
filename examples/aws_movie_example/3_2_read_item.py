@@ -12,7 +12,7 @@ def get_movie(title, year):
     return item
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     movie = get_movie("The Big New Movie", 2015)
     if movie:
         print("Get movie succeeded:")

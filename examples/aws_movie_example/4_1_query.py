@@ -10,7 +10,7 @@ def query_movies(year):
     return table.query(Movie.year == year)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     query_year = 1985
     print(f"Movies from {query_year}")
     movies = query_movies(query_year)

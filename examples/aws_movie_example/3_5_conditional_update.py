@@ -15,7 +15,7 @@ def remove_actors(title, year, actor_count):
     return response
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     update_response = remove_actors("The Big New Movie", 2015, 3)
     if update_response:
         print("Updated")
