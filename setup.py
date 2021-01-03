@@ -1,6 +1,6 @@
 import setuptools
-from awstin import __version__
 
+from awstin import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
