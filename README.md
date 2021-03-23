@@ -179,6 +179,17 @@ updated = my_table.update_item(
 )
 ```
 
+`if_not_exists` and `list_append` are provided as well:
+
+```python
+from awstin.dynamodb import list_append
+
+update_expression = (
+    MyModel.an_attr.set(MyModel.an_attr.if_not_exists(MyModel.another_attr))
+    & MyModel.third_attr.set(list_append([1.1, 2.2], MyModel.list_attr))
+)
+```
+
 `update_item` returns `None` if the condition evaluates to `False`.
 
 **Float and Decimal**

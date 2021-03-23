@@ -222,6 +222,13 @@ class BaseAttribute:
     def __rsub__(self, other):
         return CombineOperand(UpdateOperand(other), UpdateOperand(self), "-")
 
+    def if_not_exists(self, value):
+        """
+        Conditionally return a value if this attribute doesn't exist on the
+        model
+        """
+        return IfNotExistsOperand(UpdateOperand(self), UpdateOperand(value))
+
 
 class Key(BaseAttribute):
     """
@@ -694,8 +701,69 @@ class CombineOperand(UpdateOperand):
 
 
 class IfNotExistsOperand(UpdateOperand):
-    pass  # TODO
+    """
+    Set a value if the given attribute does not exist
+    """
+
+    def __init__(self, attr, value):
+        self.attr = attr
+        self.value = value
+
+    def serialize(self):
+        ser_attr = serialize_operand(self.attr)
+        ser_value = serialize_operand(self.value)
+
+        expression = (
+            f"if_not_exists({ser_attr['UpdateExpression']}, "
+            f"{ser_value['UpdateExpression']})"
+        )
+
+        return {
+            "UpdateExpression": expression,
+            "ExpressionAttributeNames": dict(
+                **ser_attr["ExpressionAttributeNames"],
+                **ser_value["ExpressionAttributeNames"],
+            ),
+            "ExpressionAttributeValues": dict(
+                **ser_attr["ExpressionAttributeValues"],
+                **ser_value["ExpressionAttributeValues"],
+            ),
+        }
 
 
 class ListAppendOperand(UpdateOperand):
-    pass  # TODO
+    """
+    Combine two lists
+    """
+
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def serialize(self):
+        ser_left = serialize_operand(self.left)
+        ser_right = serialize_operand(self.right)
+
+        expression = (
+            f"list_append({ser_left['UpdateExpression']}, "
+            f"{ser_right['UpdateExpression']})"
+        )
+
+        return {
+            "UpdateExpression": expression,
+            "ExpressionAttributeNames": dict(
+                **ser_left["ExpressionAttributeNames"],
+                **ser_right["ExpressionAttributeNames"],
+            ),
+            "ExpressionAttributeValues": dict(
+                **ser_left["ExpressionAttributeValues"],
+                **ser_right["ExpressionAttributeValues"],
+            ),
+        }
+
+
+def list_append(left, right):
+    """
+    Set a value to the combination of two lists in an update expression
+    """
+    return ListAppendOperand(UpdateOperand(left), UpdateOperand(right))

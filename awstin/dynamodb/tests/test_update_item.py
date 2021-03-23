@@ -1,6 +1,6 @@
 import unittest
 
-from awstin.dynamodb.orm import Attr, DynamoModel, Key
+from awstin.dynamodb.orm import Attr, DynamoModel, Key, list_append
 from awstin.dynamodb.testing import temporary_dynamodb_table
 
 
@@ -566,4 +566,159 @@ class TestUpdateItem(unittest.TestCase):
                 pkey="bbb",
                 an_attr=61,
             )
+            self.assertEqual(result, expected)
+
+    def test_if_not_exists_applied(self):
+        update_expression = MyModel.an_attr.set(MyModel.an_attr.if_not_exists(10))
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                another_attr=999,
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=10,
+                another_attr=999,
+            )
+
+            self.assertEqual(result, expected)
+
+    def test_if_not_exists_applied_attr(self):
+        update_expression = MyModel.an_attr.set(
+            MyModel.an_attr.if_not_exists(MyModel.another_attr)
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                another_attr=50,
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=50,
+                another_attr=50,
+            )
+
+            self.assertEqual(result, expected)
+
+    def test_if_not_exists_not_applied(self):
+        update_expression = MyModel.an_attr.set(MyModel.an_attr.if_not_exists(10))
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                an_attr=777,
+                another_attr=999,
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=777,
+                another_attr=999,
+            )
+
+            self.assertEqual(result, expected)
+
+    def test_list_append_literal_literal(self):
+        update_expression = MyModel.an_attr.set(
+            list_append([1.1, 2.2, 3.3], [4.4, 5.5, 6.6])
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                an_attr=777,
+                another_attr=999,
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=[1.1, 2.2, 3.3, 4.4, 5.5, 6.6],
+                another_attr=999,
+            )
+
+            self.assertEqual(result, expected)
+
+    def test_list_append_literal_attr(self):
+        update_expression = MyModel.an_attr.set(
+            list_append([1.1, 2.2, 3.3], MyModel.another_attr)
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                an_attr=777,
+                another_attr=[999],
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=[1.1, 2.2, 3.3, 999],
+                another_attr=[999],
+            )
+
+            self.assertEqual(result, expected)
+
+    def test_list_append_attr_literal(self):
+        update_expression = MyModel.an_attr.set(
+            list_append(MyModel.another_attr, [4.4, 5.5, 6.6])
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                an_attr=777,
+                another_attr=[999],
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=[999, 4.4, 5.5, 6.6],
+                another_attr=[999],
+            )
+
+            self.assertEqual(result, expected)
+
+    def test_list_append_attr_attr(self):
+        update_expression = MyModel.an_attr.set(
+            list_append(MyModel.an_attr, MyModel.another_attr)
+        )
+
+        with self.temp_table as table:
+            item = MyModel(
+                pkey="aaa",
+                an_attr=["a", "b"],
+                another_attr=["c", "d"],
+            )
+            table.put_item(item)
+
+            result = table.update_item("aaa", update_expression)
+
+            expected = MyModel(
+                pkey="aaa",
+                an_attr=["a", "b", "c", "d"],
+                another_attr=["c", "d"],
+            )
+
             self.assertEqual(result, expected)
