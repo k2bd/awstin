@@ -1,6 +1,5 @@
 import contextlib
 import warnings
-from typing import Any, Dict, Optional
 
 from yaml import load
 
@@ -181,4 +180,3 @@ def create_serverless_tables(
                 )
                 stack.enter_context(manager)
         yield
-
