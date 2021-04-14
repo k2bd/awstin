@@ -1,9 +1,6 @@
 # Making a Release
 
-To release, open a PR to master. Normal merge, do not squash the commit.
+Make sure the version in `awstin/__init__.py` matches the new version.
+From a commit on `main`, create a new tag of the format `v0.1.2`. Then push it.
 
-Once merged to master, a new version should be automatically built and uploaded
-to PyPI.
-
-Then open a PR to develop that bumps the version in `awstin/__init__.py`. This
-is a good opportunity to re-enable squash and merge.
+A new version should be automatically built and uploaded to PyPI.
