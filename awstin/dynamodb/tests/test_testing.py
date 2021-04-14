@@ -4,8 +4,7 @@ import unittest.mock as mock
 
 from awstin.dynamodb import Attr, DynamoDB, DynamoModel, Key
 from awstin.dynamodb.table import __name__ as DYNAMODB_NAME
-from awstin.dynamodb.testing import (create_serverless_tables,
-                                     temporary_dynamodb_table)
+from awstin.dynamodb.testing import create_serverless_tables, temporary_dynamodb_table
 
 SIMPLE_SERVERLESS_YML = os.path.join(
     os.path.dirname(__file__), "data", "simple_serverless.yml"
