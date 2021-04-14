@@ -1,0 +1,32 @@
+resources:
+  Resources:
+    ExampleTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: MyExampleTable
+        KeySchema:
+          - AttributeName: myHashKey
+            KeyType: HASH
+          - AttributeName: mySortKey
+            KeyType: RANGE
+        AttributeDefinitions:
+          - AttributeName: myHashKey
+            AttributeType: S
+          - AttributeName: mySortKey
+            AttributeType: N
+        ProvisionedThroughput:
+          ReadCapacityUnits: 123
+          WriteCapacityUnits: 456
+    AnotherTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: AnotherTable
+        KeySchema:
+          - AttributeName: hashKey
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: hashKey
+            AttributeType: B
+        ProvisionedThroughput:
+          ReadCapacityUnits: 111
+          WriteCapacityUnits: 222

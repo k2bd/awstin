@@ -204,6 +204,8 @@ retrieval from DynamoDB, are given the value `awstin.dynamodb.NOT_SET`.
 
 ### Testing
 
+#### Individual Tables
+
 For integration testing, a context manager to create and then automatically tear-down a DynamoDB table is provided.
 The context manager waits for the table to be created/deleted before entering/exiting to avoid testing issues.
 Hashkey and sortkey info can be provided.
@@ -219,6 +221,23 @@ with temporary_dynamodb_table(User, "hashkey_name") as table:
         account_age=333,
     )
     table.put_item(item)
+```
+
+#### Whole serverless deployments
+
+(Note: this feature only has very basic support and is still being developed. See [#99](https://github.com/k2bd/awstin/issues/99))
+
+It's also possible to deploy tables from a `serverless.yml` file. This prevents the need to write fixtures or mixins for individual tables and prevents the need for multiple sources of truth on table structures when testing a `sls` project.
+
+```python
+from awstin.dynamodb.testing import create_serverless_tables
+
+SERVERLESS_FILE = "path/to/serverless.yml"
+
+
+with create_serverless_tables(SERVERLESS_FILE):
+    users_table = dynamodb[User]
+    user = users_table["user456"]
 ```
 
 
