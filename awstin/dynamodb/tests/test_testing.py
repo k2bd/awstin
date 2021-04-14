@@ -1,9 +1,14 @@
+import os
 import unittest
 import unittest.mock as mock
 
-from awstin.dynamodb import DynamoDB, DynamoModel, Key
+from awstin.dynamodb import Attr, DynamoDB, DynamoModel, Key
 from awstin.dynamodb.table import __name__ as DYNAMODB_NAME
-from awstin.dynamodb.testing import temporary_dynamodb_table
+from awstin.dynamodb.testing import create_serverless_tables, temporary_dynamodb_table
+
+SIMPLE_SERVERLESS_YML = os.path.join(
+    os.path.dirname(__file__), "data", "simple_serverless.yml"
+)
 
 
 class TestTemporaryDynamoDBTable(unittest.TestCase):
@@ -75,3 +80,54 @@ class TestTemporaryDynamoDBTable(unittest.TestCase):
                     pass
 
         self.assertEqual("Could not create table 'test_table_name'", str(err.exception))
+
+
+class TestCreateServerlessTables(unittest.TestCase):
+    def test_deploy_simple_tables_right_tables(self):
+        dynamodb = DynamoDB()
+
+        with create_serverless_tables(SIMPLE_SERVERLESS_YML):
+            # Tables are created
+            tables = dynamodb.list_tables()
+            self.assertCountEqual(tables, ["MyExampleTable", "AnotherTable"])
+
+        # Tables are deleted
+        self.assertCountEqual(dynamodb.list_tables(), [])
+
+    def test_deploy_simple_tables_describe_tables(self):
+        dynamodb = DynamoDB()
+
+        with create_serverless_tables(SIMPLE_SERVERLESS_YML):
+            table_desc_1 = dynamodb.client.describe_table(
+                TableName="MyExampleTable",
+            )
+            table_desc_2 = dynamodb.client.describe_table(
+                TableName="AnotherTable",
+            )
+
+        # Deployed with accurate descriptions
+        self.assertEqual(len(table_desc_1["Table"]["KeySchema"]), 2)
+        self.assertEqual(len(table_desc_2["Table"]["KeySchema"]), 1)
+
+    def test_deploy_simple_tables_usable_by_awstin(self):
+        dynamodb = DynamoDB()
+
+        class ExampleModel(DynamoModel):
+            _table_name_ = "MyExampleTable"
+
+            myHashKey = Key()
+            mySortKey = Key()
+            another_attr = Attr()
+
+        with create_serverless_tables(SIMPLE_SERVERLESS_YML):
+            example_table = dynamodb[ExampleModel]
+            item = ExampleModel(
+                myHashKey="aaa",
+                mySortKey=123,
+                another_attr="Hello!",
+            )
+            example_table.put_item(item)
+
+            retrieved_item = example_table[("aaa", 123)]
+
+        self.assertEqual(retrieved_item.another_attr, "Hello!")
